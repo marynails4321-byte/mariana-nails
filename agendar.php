@@ -16,7 +16,7 @@ $exito = '';
 // Procesar el formulario cuando la clienta selecciona su servicio y horario
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $servicio = trim($_POST['servicio'] ?? '');
-    $foto_ejemplo = trim($_POST['foto_ejemplo'] ?? '');
+    $foto_ejemplo = trim($_POST['foto_ejemplo'] ?? 'Icono Luxury');
     $fecha_seleccionada = trim($_POST['fecha'] ?? '');
     $hora_seleccionada = trim($_POST['hora'] ?? '');
 
@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="login-body agenda-body-align">
 
-    <div class="agenda-container" style="max-width: 600px;">
+    <div class="agenda-container" style="max-width: 650px;">
         
         <div class="agenda-header">
             <div>
@@ -85,40 +85,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <?php if (!empty($error)): ?>
             <div class="alert-error">
-                <?php echo htmlspecialchars($error); ?>
+                <i class="fa-solid fa-triangle-exclamation"></i> <?php echo htmlspecialchars($error); ?>
             </div>
         <?php endif; ?>
 
         <?php if (!empty($exito)): ?>
             <div class="alert-success">
-                <?php echo htmlspecialchars($exito); ?>
+                <i class="fa-solid fa-circle-check"></i> <?php echo htmlspecialchars($exito); ?>
             </div>
         <?php endif; ?>
 
         <form action="agendar.php" method="POST">
             
-            <!-- PASO 1: SELECCIONAR SERVICIO CON FOTO EN TARJETAS -->
-            <label style="display: block; font-weight: 600; margin-bottom: 10px; font-size: 0.95rem;">1. Selecciona el Diseño o Servicio:</label>
+            <!-- PASO 1: SELECCIONAR SERVICIO CON TARJETAS EN CUADRÍCULA -->
+            <label style="display: block; font-weight: 600; margin-bottom: 12px; font-size: 0.95rem; color: var(--luxury-text);">1. Selecciona el Diseño o Servicio:</label>
             <div class="services-grid">
                 
                 <label class="service-card" onclick="selectService(this)">
                     <input type="radio" name="servicio" value="Uñas Acrílicas Elegantes" required>
-                    <input type="hidden" name="foto_ejemplo" value="img/acrilicas.jpg">
-                    <img src="img/acrilicas.jpg" alt="Acrílicas" onerror="this.src='https://via.placeholder.com/150?text=Acrilicas'">
+                    <input type="hidden" name="foto_ejemplo" value="Acrílicas Elegantes">
+                    <div class="service-icon"><i class="fa-solid fa-hand-sparkles"></i></div>
                     <div class="service-title">Acrílicas Elegantes</div>
                 </label>
 
                 <label class="service-card" onclick="selectService(this)">
                     <input type="radio" name="servicio" value="Esmaltado Semipermanente">
-                    <input type="hidden" name="foto_ejemplo" value="img/semi.jpg">
-                    <img src="img/semi.jpg" alt="Semipermanente" onerror="this.src='https://via.placeholder.com/150?text=Semi'">
+                    <input type="hidden" name="foto_ejemplo" value="Esmaltado Semipermanente">
+                    <div class="service-icon"><i class="fa-solid fa-gem"></i></div>
                     <div class="service-title">Semipermanente</div>
                 </label>
 
                 <label class="service-card" onclick="selectService(this)">
                     <input type="radio" name="servicio" value="Kapping Gel">
-                    <input type="hidden" name="foto_ejemplo" value="img/kapping.jpg">
-                    <img src="img/kapping.jpg" alt="Kapping" onerror="this.src='https://via.placeholder.com/150?text=Kapping'">
+                    <input type="hidden" name="foto_ejemplo" value="Kapping Gel">
+                    <div class="service-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
                     <div class="service-title">Kapping Gel</div>
                 </label>
 
@@ -135,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <!-- PASO 3: SELECCIONAR HORA -->
             <div class="form-group-luxury" style="margin-bottom: 25px;">
-                <label for="hora">3. Hora preferida</label>
+                <label for="hora">3. Hora preferida (Intervalos de 3 horas mínimas)</label>
                 <div class="input-wrapper">
                     <i class="fa-regular fa-clock"></i>
                     <select id="hora" name="hora" required style="width: 100%; padding: 10px; border: none; outline: none; background: transparent;">

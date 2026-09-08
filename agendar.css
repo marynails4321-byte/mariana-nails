@@ -5,26 +5,32 @@
 :root {
     --luxury-gold: #d4af37;
     --luxury-gold-light: #fdfcf7;
-    --luxury-gold-hover: #c59b27;
     --luxury-border: #e2d9cc;
     --luxury-text: #2c2c2c;
     --luxury-muted: #8c8275;
     --luxury-bg-card: #ffffff;
 }
 
-/* Contenedor de las tarjetas de servicios */
+/* Cuadrícula organizada para que las tarjetas salgan lado a lado */
 .services-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
     gap: 15px;
     margin-bottom: 22px;
+}
+
+/* Responsivo para celulares: se acomodan de 2 en 2 o en columna si es muy pequeño */
+@media (max-width: 600px) {
+    .services-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
 }
 
 /* Tarjeta individual de servicio estilo Luxury */
 .service-card {
     border: 1.5px solid var(--luxury-border);
     border-radius: 12px;
-    padding: 12px;
+    padding: 20px 10px;
     text-align: center;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -39,26 +45,18 @@
     box-shadow: 0 6px 15px rgba(212, 175, 55, 0.1);
 }
 
-/* Imagen miniatura de la tarjeta */
-.service-card img {
-    width: 100%;
-    height: 100px;
-    object-fit: cover;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    filter: brightness(0.96);
-    transition: filter 0.3s ease;
-}
-
-.service-card:hover img {
-    filter: brightness(1);
+/* Icono central de la tarjeta */
+.service-icon {
+    font-size: 2rem;
+    color: var(--luxury-gold);
+    margin-bottom: 12px;
 }
 
 .service-card input[type="radio"] {
     display: none;
 }
 
-/* Estado seleccionado de la tarjeta (Toque Dorado) */
+/* Estado seleccionado de la tarjeta (Toque Dorado + Check) */
 .service-card.selected {
     border-color: var(--luxury-gold);
     background-color: var(--luxury-gold-light);
@@ -73,7 +71,7 @@
     top: 8px;
     right: 8px;
     color: var(--luxury-gold);
-    font-size: 1.1rem;
+    font-size: 1rem;
     background: #fff;
     border-radius: 50%;
     width: 20px;
@@ -92,7 +90,7 @@
     letter-spacing: -0.2px;
 }
 
-/* Alertas de Error y Éxito personalizadas a la paleta */
+/* Alertas de Error y Éxito estilizadas */
 .alert-error {
     background-color: #fdf2f2;
     border: 1px solid #f8d7da;
@@ -104,7 +102,7 @@
     font-family: 'Inter', sans-serif;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
 .alert-success {
@@ -118,10 +116,9 @@
     font-family: 'Inter', sans-serif;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
-/* Ajustes finos para los inputs de calendario/hora para que armonicen con el formulario */
 .agenda-container .form-group-luxury label {
     font-family: 'Inter', sans-serif;
     font-weight: 500;
