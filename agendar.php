@@ -2,7 +2,6 @@
 session_start();
 require_once 'conexion.php';
 
-// Verificar que la clienta haya iniciado sesión
 if (!isset($_SESSION['clienta_logged']) || $_SESSION['clienta_logged'] !== true) {
     header("Location: index.php");
     exit();
@@ -13,7 +12,6 @@ $nombre_clienta = $_SESSION['nombre_clienta'];
 $error = '';
 $exito = '';
 
-// Procesar el formulario cuando la clienta selecciona su servicio y horario
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $servicio = trim($_POST['servicio'] ?? '');
     $foto_ejemplo = trim($_POST['foto_ejemplo'] ?? 'Icono Luxury');
@@ -23,11 +21,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($servicio) || empty($fecha_seleccionada) || empty($hora_seleccionada)) {
         $error = "Por favor completa todos los campos y selecciona un horario.";
     } else {
-        // Unir fecha y hora en un formato de timestamp completo
         $fecha_hora_cita = $fecha_seleccionada . ' ' . $hora_seleccionada . ':00';
         
         try {
-            // REGLA DE NEGOCIO: Validar que no haya otra cita en un rango de menos de 3 horas (10800 segundos)
             $stmtCheck = $pdo->prepare("
                 SELECT fecha_cita FROM citas 
                 WHERE ABS(EXTRACT(EPOCH FROM (fecha_cita - TIMESTAMP :nueva_cita))) < 10800
@@ -38,7 +34,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($cita_existente) {
                 $error = "Lo sentimos, este horario no está disponible. Debe haber un espacio mínimo de 3 horas entre cada turno.";
             } else {
-                // Insertar la cita si el horario está libre
                 $stmtInsert = $pdo->prepare("
                     INSERT INTO citas (clienta_id, servicio, foto_ejemplo, fecha_cita, estado) 
                     VALUES (:clienta_id, :servicio, :foto_ejemplo, :fecha_cita, 'Confirmada')
@@ -66,12 +61,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Agendar Cita - Mariana Nails Studio</title>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="index.css">
     <link rel="stylesheet" href="agendar.css">
 </head>
-<body class="login-body agenda-body-align">
+<body style="background-color: #f7f4ed; margin: 0; padding: 20px; display: flex; align-items: center; justify-content: min-height: 100vh;">
 
-    <div class="agenda-container" style="max-width: 650px;">
+    <div class="agenda-container">
         
         <div class="agenda-header">
             <div>
@@ -79,7 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <p class="agenda-subtitle-text">Hola, <?php echo htmlspecialchars($nombre_clienta); ?></p>
             </div>
             <a href="clienta.php" class="logout-link">
-                <i class="fa-solid fa-arrow-left"></i> Volver a mi panel
+                <i class="fa-solid fa-arrow-left"></i> Volver
             </a>
         </div>
 
@@ -97,8 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form action="agendar.php" method="POST">
             
-            <!-- PASO 1: SELECCIONAR SERVICIO CON TARJETAS EN CUADRÍCULA -->
-            <label style="display: block; font-weight: 600; margin-bottom: 12px; font-size: 0.95rem; color: var(--luxury-text);">1. Selecciona el Diseño o Servicio:</label>
+            <label class="form-label-luxury">1. Selecciona el Diseño o Servicio:</label>
             <div class="services-grid">
                 
                 <label class="service-card" onclick="selectService(this)">
@@ -124,21 +117,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             </div>
 
-            <!-- PASO 2: SELECCIONAR FECHA -->
-            <div class="form-group-luxury" style="margin-bottom: 15px;">
+            <div class="form-group-luxury">
                 <label for="fecha">2. Fecha de tu cita</label>
                 <div class="input-wrapper">
                     <i class="fa-regular fa-calendar"></i>
-                    <input type="date" id="fecha" name="fecha" min="<?php echo date('Y-m-d'); ?>" required style="width: 100%; padding: 10px; border: none; outline: none; background: transparent;">
+                    <input type="date" id="fecha" name="fecha" min="<?php echo date('Y-m-d'); ?>" required>
                 </div>
             </div>
 
-            <!-- PASO 3: SELECCIONAR HORA -->
             <div class="form-group-luxury" style="margin-bottom: 25px;">
                 <label for="hora">3. Hora preferida (Intervalos de 3 horas mínimas)</label>
                 <div class="input-wrapper">
                     <i class="fa-regular fa-clock"></i>
-                    <select id="hora" name="hora" required style="width: 100%; padding: 10px; border: none; outline: none; background: transparent;">
+                    <select id="hora" name="hora" required>
                         <option value="">Selecciona una hora...</option>
                         <option value="09:00">09:00 AM</option>
                         <option value="10:00">10:00 AM</option>
@@ -155,13 +146,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
 
-            <button type="submit" class="btn-luxury" style="width: 100%;">Confirmar y Reservar Cita</button>
+            <button type="submit" class="btn-luxury">Confirmar y Reservar Cita</button>
 
         </form>
     </div>
 
     <script>
-        // Función visual para resaltar la tarjeta de servicio seleccionada
         function selectService(cardElement) {
             document.querySelectorAll('.service-card').forEach(card => {
                 card.classList.remove('selected');

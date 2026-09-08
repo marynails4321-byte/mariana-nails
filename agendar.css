@@ -1,5 +1,5 @@
 /* ========================================== */
-/* TEMÁTICA LUXURY - AGENDAR CITA             */
+/* ESTILOS LUXURY - AGENDAR CITA              */
 /* ========================================== */
 
 :root {
@@ -11,75 +11,109 @@
     --luxury-bg-card: #ffffff;
 }
 
-/* Cuadrícula organizada para que las tarjetas salgan lado a lado */
+/* Contenedor principal de la tarjeta de agenda */
+.agenda-container {
+    background: #ffffff;
+    border: 1px solid var(--luxury-border);
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+    width: 100%;
+    max-width: 600px;
+    margin: 40px auto;
+}
+
+/* Cabecera */
+.agenda-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--luxury-border);
+    padding-bottom: 15px;
+    margin-bottom: 25px;
+}
+
+.agenda-title {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.8rem;
+    color: var(--luxury-text);
+    margin: 0;
+}
+
+.agenda-subtitle-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--luxury-muted);
+    margin: 3px 0 0 0;
+}
+
+.logout-link {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    color: var(--luxury-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+.logout-link:hover {
+    color: var(--luxury-gold);
+}
+
+/* Cuadrícula de servicios */
 .services-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 15px;
-    margin-bottom: 22px;
+    gap: 12px;
+    margin-bottom: 25px;
 }
 
-/* Responsivo para celulares: se acomodan de 2 en 2 o en columna si es muy pequeño */
 @media (max-width: 600px) {
     .services-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(1, 1fr);
     }
 }
 
-/* Tarjeta individual de servicio estilo Luxury */
 .service-card {
     border: 1.5px solid var(--luxury-border);
     border-radius: 12px;
-    padding: 20px 10px;
+    padding: 18px 10px;
     text-align: center;
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease;
     background: var(--luxury-bg-card);
     position: relative;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
 }
 
 .service-card:hover {
     border-color: var(--luxury-gold);
     transform: translateY(-2px);
-    box-shadow: 0 6px 15px rgba(212, 175, 55, 0.1);
 }
 
-/* Icono central de la tarjeta */
 .service-icon {
-    font-size: 2rem;
+    font-size: 1.8rem;
     color: var(--luxury-gold);
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .service-card input[type="radio"] {
     display: none;
 }
 
-/* Estado seleccionado de la tarjeta (Toque Dorado + Check) */
 .service-card.selected {
     border-color: var(--luxury-gold);
     background-color: var(--luxury-gold-light);
-    box-shadow: 0 4px 16px rgba(212, 175, 55, 0.22);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.15);
 }
 
 .service-card.selected::after {
-    content: '\f058'; /* Icono check de FontAwesome */
+    content: '\f058';
     font-family: 'Font Awesome 6 Free';
     font-weight: 900;
     position: absolute;
     top: 8px;
     right: 8px;
     color: var(--luxury-gold);
-    font-size: 1rem;
-    background: #fff;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    font-size: 0.95rem;
 }
 
 .service-title {
@@ -87,10 +121,87 @@
     font-size: 0.85rem;
     font-weight: 500;
     color: var(--luxury-text);
-    letter-spacing: -0.2px;
 }
 
-/* Alertas de Error y Éxito estilizadas */
+/* Etiquetas y Secciones */
+.form-label-luxury {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--luxury-text);
+    display: block;
+    margin-bottom: 8px;
+}
+
+/* Envoltorio elegante para inputs (igual al login) */
+.form-group-luxury {
+    margin-bottom: 20px;
+}
+
+.form-group-luxury label {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--luxury-muted);
+    display: block;
+    margin-bottom: 6px;
+}
+
+.input-wrapper {
+    display: flex;
+    align-items: center;
+    background: #faf8f5;
+    border: 1px solid var(--luxury-border);
+    border-radius: 8px;
+    padding: 0 12px;
+    transition: border-color 0.2s;
+}
+
+.input-wrapper:focus-within {
+    border-color: var(--luxury-gold);
+    background: #fff;
+}
+
+.input-wrapper i {
+    color: var(--luxury-muted);
+    font-size: 0.95rem;
+    margin-right: 10px;
+}
+
+.input-wrapper input,
+.input-wrapper select {
+    width: 100%;
+    padding: 11px 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.9rem;
+    color: var(--luxury-text);
+}
+
+/* Botón principal */
+.btn-luxury {
+    background: linear-gradient(135deg, #d4af37 0%, #b89728 100%);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    width: 100%;
+    text-align: center;
+}
+
+.btn-luxury:hover {
+    opacity: 0.95;
+    transform: translateY(-1px);
+}
+
+/* Alertas */
 .alert-error {
     background-color: #fdf2f2;
     border: 1px solid #f8d7da;
@@ -100,9 +211,6 @@
     font-size: 0.85rem;
     margin-bottom: 20px;
     font-family: 'Inter', sans-serif;
-    display: flex;
-    align-items: center;
-    gap: 10px;
 }
 
 .alert-success {
@@ -114,14 +222,4 @@
     font-size: 0.85rem;
     margin-bottom: 20px;
     font-family: 'Inter', sans-serif;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.agenda-container .form-group-luxury label {
-    font-family: 'Inter', sans-serif;
-    font-weight: 500;
-    font-size: 0.9rem;
-    color: var(--luxury-text);
 }
