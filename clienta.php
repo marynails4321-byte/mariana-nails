@@ -92,7 +92,7 @@ try {
                 <h2 class="agenda-title">Bienvenida, <?php echo htmlspecialchars($nombre_clienta); ?> ✨</h2>
                 <p class="agenda-subtitle-text">Mariana Nails Studio - Tu espacio de belleza</p>
             </div>
-            <a href="logout.php" class="logout-link">
+            <a href="logoutc.php" class="logout-link">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i> Salir
             </a>
         </div>
