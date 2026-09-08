@@ -37,7 +37,7 @@ if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true):
     <div class="login-card-luxury">
         <!-- Logo del Studio -->
         <div class="logo-container">
-            <img src="logo.png" alt="Mariana Nails Studio" class="brand-logo">
+            <img src="Logo.png" alt="Mariana Nails Studio" class="brand-logo">
         </div>
         
         <p class="login-subtitle">Acceso Exclusivo - Administración</p>
