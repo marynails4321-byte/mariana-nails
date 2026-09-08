@@ -100,7 +100,7 @@ try {
             <?php else: ?>
                 <?php foreach ($servicios_db as $serv): ?>
                     <!-- Nota: enctype="multipart/form-data" es obligatorio para subir archivos -->
-                    <form action="admin_servicios.php" method="POST" enctype="multipart/form-data" class="service-admin-item" style="background: #faf8f5; border: 1px solid #e2d9cc; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 12px;">
+                    <form action="Admin_servicios.php" method="POST" enctype="multipart/form-data" class="service-admin-item" style="background: #faf8f5; border: 1px solid #e2d9cc; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 12px;">
                         <input type="hidden" name="action" value="actualizar_servicio">
                         <input type="hidden" name="id" value="<?php echo $serv['id']; ?>">
                         <!-- Guardamos la ruta actual por si no eligen una nueva imagen -->
