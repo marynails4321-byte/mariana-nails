@@ -1,24 +1,16 @@
 <?php
-// Iniciar la sesión para poder acceder a ella
 session_start();
 
-// Destruir todas las variables de sesión
+// Destruir sesión de PHP
 $_SESSION = array();
-
-// Si se desea destruir la sesión completamente, borra también la cookie de sesión.
-// Nota: ¡Esto destruirá la sesión y no la información de la sesión!
-if (ini_get("session.use_cookies")) {
-    $params = session_get_cookie_params();
-    setcookie(session_name(), '', time() - 42000,
-        $params["path"], $params["domain"],
-        $params["secure"], $params["httponly"]
-    );
-}
-
-// Finalmente, destruir la sesión
 session_destroy();
 
-// Redirigir al usuario a la página principal de acceso (index.php)
-header("Location: index.php");
+// Eliminar la cookie de persistencia del administrador
+if (isset($_COOKIE['cookie_admin_logged'])) {
+    setcookie('cookie_admin_logged', '', time() - 3600, "/");
+}
+
+// Redirigir al panel de administración (que pedirá contraseña de nuevo)
+header("Location: admin.php");
 exit();
 ?>
