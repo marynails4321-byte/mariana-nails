@@ -5,13 +5,28 @@ require_once 'conexion.php';
 $error = '';
 $mensaje_exito = '';
 
-// Procesar el inicio de sesión del administrador
+// ==========================================
+// VERIFICAR COOKIE PERSISTENTE DE ADMINISTRADOR
+// ==========================================
+if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true) {
+    if (isset($_COOKIE['cookie_admin_logged']) && $_COOKIE['cookie_admin_logged'] === 'true') {
+        $_SESSION['admin_logged'] = true;
+    }
+}
+
+// ==========================================
+// PROCESAR EL INICIO DE SESIÓN
+// ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
     $password_ingresada = trim($_POST['password'] ?? '');
     $password_correcta = '4321Mary';
 
     if ($password_ingresada === $password_correcta) {
         $_SESSION['admin_logged'] = true;
+        
+        // Crear cookie de administrador por 30 días
+        setcookie('cookie_admin_logged', 'true', time() + (86400 * 30), "/");
+
         header("Location: admin.php");
         exit();
     } else {
@@ -241,7 +256,7 @@ try {
                                     <td><?php echo htmlspecialchars($c['id']); ?></td>
                                     <td><strong><?php echo htmlspecialchars($c['nombre']); ?></strong></td>
                                     <td><?php echo htmlspecialchars($c['fnacimiento']); ?></td>
-                                    <td><?php echo htmlspecialchars($c['creado_en']); ?></td>
+                                    <td><?php echo htmlspecialchars($c['creado_en'] ?? $c['creado_at'] ?? 'Sin fecha'); ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
