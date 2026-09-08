@@ -13,10 +13,10 @@ $error = '';
 $exito = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $servicio = trim($_POST['servicio'] ?? '');
-    $foto_ejemplo = trim($_POST['foto_ejemplo'] ?? 'Icono Luxury');
-    $fecha_seleccionada = trim($_POST['fecha'] ?? '');
-    $hora_seleccionada = trim($_POST['hora'] ?? '');
+    $servicio = isset($_POST['servicio']) ? trim($_POST['servicio']) : '';
+    $foto_ejemplo = isset($_POST['foto_ejemplo']) ? trim($_POST['foto_ejemplo']) : 'Icono Luxury';
+    $fecha_seleccionada = isset($_POST['fecha']) ? trim($_POST['fecha']) : '';
+    $hora_seleccionada = isset($_POST['hora']) ? trim($_POST['hora']) : '';
 
     if (empty($servicio) || empty($fecha_seleccionada) || empty($hora_seleccionada)) {
         $error = "Por favor completa todos los campos y selecciona un horario.";
@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 SELECT fecha_cita FROM citas 
                 WHERE ABS(EXTRACT(EPOCH FROM (fecha_cita - TIMESTAMP :nueva_cita))) < 10800
             ");
-            $stmtCheck->execute(['nueva_cita' => $fecha_hora_cita]);
+            $stmtCheck->execute(array('nueva_cita' => $fecha_hora_cita));
             $cita_existente = $stmtCheck->fetch();
 
             if ($cita_existente) {
@@ -38,12 +38,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     INSERT INTO citas (clienta_id, servicio, foto_ejemplo, fecha_cita, estado) 
                     VALUES (:clienta_id, :servicio, :foto_ejemplo, :fecha_cita, 'Confirmada')
                 ");
-                $stmtInsert->execute([
+                $stmtInsert->execute(array(
                     'clienta_id' => $clienta_id,
                     'servicio' => $servicio,
                     'foto_ejemplo' => $foto_ejemplo,
                     'fecha_cita' => $fecha_hora_cita
-                ]);
+                ));
                 
                 $exito = "¡Tu cita ha sido agendada con éxito!";
             }
@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="agendar.css">
 </head>
-<body style="background-color: #f7f4ed; margin: 0; padding: 20px; display: flex; align-items: center; justify-content: min-height: 100vh;">
+<body style="background-color: #f7f4ed; margin: 0; padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 100vh;">
 
     <div class="agenda-container">
         
