@@ -33,6 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['nombre_clienta'] = $nombre;
             $_SESSION['clienta_logged'] = true;
 
+            // NUEVO: Guardar cookie por 30 días para recordar el dispositivo y evitar duplicados
+            setcookie('cookie_clienta_id', $_SESSION['clienta_id'], time() + (86400 * 30), "/");
+            setcookie('cookie_clienta_nombre', $nombre, time() + (86400 * 30), "/");
+
         } catch (PDOException $e) {
             $error_db = "Error al conectar con la base de datos: " . $e->getMessage();
         }
@@ -88,7 +92,7 @@ try {
                 <h2 class="agenda-title">Bienvenida, <?php echo htmlspecialchars($nombre_clienta); ?> ✨</h2>
                 <p class="agenda-subtitle-text">Mariana Nails Studio - Tu espacio de belleza</p>
             </div>
-            <a href="index.php" class="logout-link">
+            <a href="logout_clienta.php" class="logout-link">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i> Salir
             </a>
         </div>

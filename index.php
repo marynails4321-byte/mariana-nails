@@ -1,3 +1,16 @@
+<?php
+session_start();
+
+// Si ya existe la cookie en este dispositivo, la mandamos directo a su panel
+if (isset($_COOKIE['cookie_clienta_id']) && isset($_COOKIE['cookie_clienta_nombre'])) {
+    $_SESSION['clienta_logged'] = true;
+    $_SESSION['clienta_id'] = $_COOKIE['cookie_clienta_id'];
+    $_SESSION['nombre_clienta'] = $_COOKIE['cookie_clienta_nombre'];
+    
+    header("Location: clienta.php");
+    exit();
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
