@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once 'conexion.php';
 
 $error = '';
 
@@ -7,7 +8,7 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password_ingresada = trim($_POST['password'] ?? '');
     
-    // Contraseña única de acceso para Mariana (puedes cambiarla aquí cuando gustes)
+    // Contraseña única de acceso para Mariana
     $password_correcta = '4321Mary';
 
     if ($password_ingresada === $password_correcta) {
@@ -73,6 +74,27 @@ if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true):
 <?php 
 exit();
 endif; 
+
+// ==========================================
+// OBTENER DATOS DE LA BASE DE DATOS (ADMIN LOGUEADO)
+// ==========================================
+try {
+    // 1. Obtener clientas registradas
+    $stmtClientas = $pdo->query("SELECT * FROM usuarios WHERE rol = 'clienta' ORDER BY id DESC");
+    $clientas = $stmtClientas->fetchAll(PDO::FETCH_ASSOC);
+
+    // 2. Obtener citas unidas con el nombre de la clienta
+    $stmtCitas = $pdo->query("
+        SELECT c.*, u.nombre as nombre_clienta 
+        FROM citas c 
+        JOIN usuarios u ON c.clienta_id = u.id 
+        ORDER BY c.fecha_hora DESC
+    ");
+    $citas = $stmtCitas->fetchAll(PDO::FETCH_ASSOC);
+
+} catch (PDOException $e) {
+    $error_db = "Error al cargar la base de datos: " . $e->getMessage();
+}
 ?>
 
 <!-- ========================================== -->
@@ -103,6 +125,12 @@ endif;
             </a>
         </div>
 
+        <?php if (!empty($error_db)): ?>
+            <div style="background-color: #fdf2f2; border: 1px solid #f8d7da; color: #a94442; padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 15px;">
+                <?php echo htmlspecialchars($error_db); ?>
+            </div>
+        <?php endif; ?>
+
         <!-- Pestañas de Navegación -->
         <div class="agenda-tabs">
             <button class="tab-btn active" onclick="switchTab(event, 'citas-section')"><i class="fa-solid fa-calendar-days"></i> Agenda de Citas</button>
@@ -128,21 +156,21 @@ endif;
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Datos de ejemplo (se conectarán dinámicamente con PostgreSQL) -->
-                        <tr>
-                            <td>1</td>
-                            <td><strong>Sofía Valdés</strong></td>
-                            <td>Estonian Manicure + Soft Gel</td>
-                            <td>10 de Jun, 2026 - 15:00</td>
-                            <td><span class="badge-status">Confirmada</span></td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td><strong>Valentina Gómez</strong></td>
-                            <td>Nail Art Minimalista & Kapping</td>
-                            <td>12 de Jun, 2026 - 11:30</td>
-                            <td><span class="badge-status">Confirmada</span></td>
-                        </tr>
+                        <?php if (empty($citas)): ?>
+                            <tr>
+                                <td colspan="5" style="text-align: center; color: var(--luxury-muted); padding: 20px;">No hay citas agendadas todavía.</td>
+                            </tr>
+                        <?php else: ?>
+                            <?php $i = 1; foreach ($citas as $cita): ?>
+                                <tr>
+                                    <td><?php echo $i++; ?></td>
+                                    <td><strong><?php echo htmlspecialchars($cita['nombre_clienta']); ?></strong></td>
+                                    <td><?php echo htmlspecialchars($cita['servicio']); ?></td>
+                                    <td><?php echo htmlspecialchars($cita['fecha_hora']); ?></td>
+                                    <td><span class="badge-status"><?php echo htmlspecialchars($cita['estado']); ?></span></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -166,19 +194,20 @@ endif;
                         </tr>
                     </thead>
                     <tbody>
-                        <!-- Datos de ejemplo (se conectarán dinámicamente con PostgreSQL) -->
-                        <tr>
-                            <td>1</td>
-                            <td><strong>Sofía Valdés</strong></td>
-                            <td>15 / 04 / 1998</td>
-                            <td>06/06/2026</td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td><strong>Valentina Gómez</strong></td>
-                            <td>22 / 09 / 2001</td>
-                            <td>07/06/2026</td>
-                        </tr>
+                        <?php if (empty($clientas)): ?>
+                            <tr>
+                                <td colspan="4" style="text-align: center; color: var(--luxury-muted); padding: 20px;">No hay clientas registradas todavía.</td>
+                            </tr>
+                        <?php else: ?>
+                            <?php foreach ($clientas as $c): ?>
+                                <tr>
+                                    <td><?php echo htmlspecialchars($c['id']); ?></td>
+                                    <td><strong><?php echo htmlspecialchars($c['nombre']); ?></strong></td>
+                                    <td><?php echo htmlspecialchars($c['fnacimiento']); ?></td>
+                                    <td><?php echo htmlspecialchars($c['creado_at']); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>

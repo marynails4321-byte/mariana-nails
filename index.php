@@ -22,8 +22,8 @@
         
         <p class="login-subtitle">Ingresa tus datos para acceder a tu experiencia</p>
 
-        <!-- Formulario para la Clienta -->
-        <form action="dashboard.php" method="GET">
+        <!-- Formulario para la Clienta apuntando a clienta.php por POST -->
+        <form action="clienta.php" method="POST">
             <!-- Campo Nombre -->
             <div class="form-group-luxury">
                 <label for="nombre">Nombre de Clienta</label>
@@ -33,7 +33,7 @@
                 </div>
             </div>
 
-            <!-- Nuevo Campo: Fecha de Nacimiento -->
+            <!-- Campo Fecha de Nacimiento -->
             <div class="form-group-luxury">
                 <label for="fnacimiento">Fecha de Nacimiento</label>
                 <div class="input-wrapper">
