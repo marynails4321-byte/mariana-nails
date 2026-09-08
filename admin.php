@@ -241,7 +241,7 @@ try {
                                     <td><?php echo htmlspecialchars($c['id']); ?></td>
                                     <td><strong><?php echo htmlspecialchars($c['nombre']); ?></strong></td>
                                     <td><?php echo htmlspecialchars($c['fnacimiento']); ?></td>
-                                    <td><?php echo htmlspecialchars($c['creado_at']); ?></td>
+                                    <td><?php echo htmlspecialchars($c['creado_en']); ?></td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
