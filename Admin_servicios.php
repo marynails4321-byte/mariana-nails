@@ -8,22 +8,45 @@ $exito = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'actualizar_servicio') {
     $id_servicio = intval($_POST['id']);
     $nuevo_precio = floatval($_POST['precio']);
-    $nueva_foto = trim($_POST['foto']);
+    $ruta_foto = trim($_POST['foto_actual']); // Mantenemos la foto actual por defecto
 
-    try {
-        $stmtUpdate = $pdo->prepare("
-            UPDATE servicios 
-            SET precio = :precio, foto = :foto 
-            WHERE id = :id
-        ");
-        $stmtUpdate->execute(array(
-            'precio' => $nuevo_precio,
-            'foto' => $nueva_foto,
-            'id' => $id_servicio
-        ));
-        $exito = "¡El servicio ha sido actualizado correctamente!";
-    } catch (PDOException $e) {
-        $error = "Error al actualizar el servicio: " . $e->getMessage();
+    // Verificar si se subió una nueva imagen
+    if (isset($_FILES['nueva_imagen']) && $_FILES['nueva_imagen']['error'] === UPLOAD_ERR_OK) {
+        $nombre_archivo = basename($_FILES['nueva_imagen']['name']);
+        // Limpiar un poco el nombre para evitar espacios o caracteres extraños
+        $nombre_archivo = preg_replace('/[^a-zA-Z0-9_\.-]/', '_', $nombre_archivo);
+        $carpeta_destino = 'img/';
+        
+        // Asegurar que la carpeta img exista
+        if (!is_dir($carpeta_destino)) {
+            mkdir($carpeta_destino, 0755, true);
+        }
+
+        $ruta_destino = $carpeta_destino . time() . '_' . $nombre_archivo; // Agregamos timestamp para evitar nombres duplicados
+
+        if (move_uploaded_file($_FILES['nueva_imagen']['tmp_name'], $ruta_destino)) {
+            $ruta_foto = $ruta_destino; // Actualizamos a la nueva ruta
+        } else {
+            $error = "Hubo un error al subir la nueva imagen.";
+        }
+    }
+
+    if (empty($error)) {
+        try {
+            $stmtUpdate = $pdo->prepare("
+                UPDATE servicios 
+                SET precio = :precio, foto = :foto 
+                WHERE id = :id
+            ");
+            $stmtUpdate->execute(array(
+                'precio' => $nuevo_precio,
+                'foto' => $ruta_foto,
+                'id' => $id_servicio
+            ));
+            $exito = "¡El servicio ha sido actualizado correctamente!";
+        } catch (PDOException $e) {
+            $error = "Error al actualizar en la base de datos: " . $e->getMessage();
+        }
     }
 }
 
@@ -76,9 +99,12 @@ try {
                 <p style="color: #8c8275; grid-column: 1 / -1; text-align: center;">No hay servicios registrados.</p>
             <?php else: ?>
                 <?php foreach ($servicios_db as $serv): ?>
-                    <form action="admin_servicios.php" method="POST" class="service-admin-item" style="background: #faf8f5; border: 1px solid #e2d9cc; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Nota: enctype="multipart/form-data" es obligatorio para subir archivos -->
+                    <form action="admin_servicios.php" method="POST" enctype="multipart/form-data" class="service-admin-item" style="background: #faf8f5; border: 1px solid #e2d9cc; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 12px;">
                         <input type="hidden" name="action" value="actualizar_servicio">
                         <input type="hidden" name="id" value="<?php echo $serv['id']; ?>">
+                        <!-- Guardamos la ruta actual por si no eligen una nueva imagen -->
+                        <input type="hidden" name="foto_actual" value="<?php echo htmlspecialchars($serv['foto']); ?>">
 
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <img src="<?php echo htmlspecialchars($serv['foto']); ?>" alt="Servicio" style="width: 55px; height: 55px; object-fit: cover; border-radius: 8px; border: 1px solid #e2d9cc;" onerror="this.src='https://via.placeholder.com/150?text=Error'">
@@ -88,14 +114,16 @@ try {
                             </div>
                         </div>
 
+                        <!-- Modificar Precio -->
                         <div style="display: flex; flex-direction: column; gap: 4px;">
                             <label style="font-size: 0.75rem; font-weight: 500; color: #8c8275;">Precio ($):</label>
                             <input type="number" step="0.01" name="precio" value="<?php echo $serv['precio']; ?>" required style="width: 100%; padding: 8px; border: 1px solid #e2d9cc; border-radius: 6px; background: #fff; box-sizing: border-box;">
                         </div>
 
+                        <!-- Seleccionar nueva imagen desde la PC -->
                         <div style="display: flex; flex-direction: column; gap: 4px;">
-                            <label style="font-size: 0.75rem; font-weight: 500; color: #8c8275;">Ruta de la Imagen (ej. img/nombre.jpg):</label>
-                            <input type="text" name="foto" value="<?php echo htmlspecialchars($serv['foto']); ?>" required style="width: 100%; padding: 8px; border: 1px solid #e2d9cc; border-radius: 6px; background: #fff; box-sizing: border-box; font-size: 0.8rem;">
+                            <label style="font-size: 0.75rem; font-weight: 500; color: #8c8275;">Cambiar Imagen (Opcional):</label>
+                            <input type="file" name="nueva_imagen" accept="image/*" style="width: 100%; padding: 6px; border: 1px solid #e2d9cc; border-radius: 6px; background: #fff; box-sizing: border-box; font-size: 0.8rem;">
                         </div>
 
                         <button type="submit" class="btn-luxury" style="background: linear-gradient(135deg, #d4af37 0%, #b89728 100%); color: white; border: none; border-radius: 6px; padding: 10px; font-weight: 600; font-size: 0.85rem; cursor: pointer; margin-top: 5px;">
