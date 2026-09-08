@@ -152,7 +152,7 @@ try {
             <a href="logout.php" class="logout-link">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión
             </a>
-            <a href="admin_servicios.php" class="btn-luxury" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px;">
+            <a href="Admin_servicios.php" class="btn-luxury" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px;">
     <i class="fa-solid fa-sliders"></i> Gestionar Precios e Imágenes de Servicios
 </a>
         </div>
