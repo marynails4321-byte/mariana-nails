@@ -88,7 +88,7 @@ try {
         SELECT c.*, u.nombre as nombre_clienta 
         FROM citas c 
         JOIN usuarios u ON c.clienta_id = u.id 
-        ORDER BY c.fecha_hora DESC
+        ORDER BY c.fecha_cita DESC
     ");
     $citas = $stmtCitas->fetchAll(PDO::FETCH_ASSOC);
 
