@@ -10,7 +10,20 @@
     --luxury-muted: #8c8275;
     --luxury-bg-card: #ffffff;
 }
-
+body {
+    /* Si tienes una imagen de mármol en tu carpeta img, colócala aquí: */
+    background-image: url('fondo.png'); /* Reemplaza por la ruta de tu imagen de mármol si aplica */
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    background-color: #f7f4ed; /* Color de respaldo por si no carga la imagen */
+    margin: 0;
+    padding: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+}
 /* Contenedor principal de la tarjeta de agenda */
 .agenda-container {
     background: #ffffff;
