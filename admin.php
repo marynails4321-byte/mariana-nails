@@ -3,12 +3,11 @@ session_start();
 require_once 'conexion.php';
 
 $error = '';
+$mensaje_exito = '';
 
 // Procesar el inicio de sesión del administrador
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
     $password_ingresada = trim($_POST['password'] ?? '');
-    
-    // Contraseña única de acceso para Mariana
     $password_correcta = '4321Mary';
 
     if ($password_ingresada === $password_correcta) {
@@ -36,7 +35,6 @@ if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true):
 <body class="login-body">
 
     <div class="login-card-luxury">
-        <!-- Logo del Studio -->
         <div class="logo-container">
             <img src="Logo.png" alt="Mariana Nails Studio" class="brand-logo">
         </div>
@@ -49,7 +47,6 @@ if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true):
             </div>
         <?php endif; ?>
 
-        <!-- Formulario de contraseña -->
         <form action="admin.php" method="POST">
             <div class="form-group-luxury">
                 <label for="password">Contraseña</label>
@@ -76,14 +73,32 @@ exit();
 endif; 
 
 // ==========================================
-// OBTENER DATOS DE LA BASE DE DATOS (ADMIN LOGUEADO)
+// PROCESAR NUEVA CLIENTA DESDE EL PANEL ADMIN
+// ==========================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'crear_clienta') {
+    $nuevo_nombre = trim($_POST['nuevo_nombre'] ?? '');
+    $nueva_fnac = trim($_POST['nueva_fnac'] ?? '');
+
+    if (!empty($nuevo_nombre) && !empty($nueva_fnac)) {
+        try {
+            $stmtInsert = $pdo->prepare("INSERT INTO usuarios (nombre, fnacimiento, rol) VALUES (:nombre, :fnac, 'clienta')");
+            $stmtInsert->execute(['nombre' => $nuevo_nombre, 'fnac' => $nueva_fnac]);
+            $mensaje_exito = "¡Clienta registrada exitosamente!";
+        } catch (PDOException $e) {
+            $error_db = "Error al registrar la clienta: " . $e->getMessage();
+        }
+    } else {
+        $error_db = "Por favor completa todos los campos para registrar a la clienta.";
+    }
+}
+
+// ==========================================
+// OBTENER DATOS DE LA BASE DE DATOS
 // ==========================================
 try {
-    // 1. Obtener clientas registradas
     $stmtClientas = $pdo->query("SELECT * FROM usuarios WHERE rol = 'clienta' ORDER BY id DESC");
     $clientas = $stmtClientas->fetchAll(PDO::FETCH_ASSOC);
 
-    // 2. Obtener citas unidas con el nombre de la clienta
     $stmtCitas = $pdo->query("
         SELECT c.*, u.nombre as nombre_clienta 
         FROM citas c 
@@ -114,7 +129,6 @@ try {
 
     <div class="agenda-container">
         
-        <!-- Cabecera de la Agenda -->
         <div class="agenda-header">
             <div>
                 <h2 class="agenda-title">Agenda & Directorio 👑</h2>
@@ -131,7 +145,12 @@ try {
             </div>
         <?php endif; ?>
 
-        <!-- Pestañas de Navegación -->
+        <?php if (!empty($mensaje_exito)): ?>
+            <div style="background-color: #e2fef0; border: 1px solid #b7ebcc; color: #0f5132; padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 15px;">
+                <?php echo htmlspecialchars($mensaje_exito); ?>
+            </div>
+        <?php endif; ?>
+
         <div class="agenda-tabs">
             <button class="tab-btn active" onclick="switchTab(event, 'citas-section')"><i class="fa-solid fa-calendar-days"></i> Agenda de Citas</button>
             <button class="tab-btn" onclick="switchTab(event, 'clientas-section')"><i class="fa-solid fa-users"></i> Directorio de Clientas</button>
@@ -183,6 +202,24 @@ try {
                 <span class="section-hint">Datos de acceso y cumpleaños</span>
             </div>
 
+            <!-- Formulario pequeño para registrar clienta desde el Admin -->
+            <div style="background: #faf7f2; padding: 15px 20px; border-radius: 8px; border: 1px solid var(--luxury-border); margin-bottom: 20px;">
+                <form action="admin.php" method="POST" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+                    <input type="hidden" name="accion" value="crear_clienta">
+                    <div style="flex: 2; min-width: 200px;">
+                        <label style="display: block; font-size: 0.8rem; color: var(--luxury-muted); margin-bottom: 5px;">Nombre Completo</label>
+                        <input type="text" name="nuevo_nombre" placeholder="Ej. Andrea Pérez" required style="width: 100%; padding: 8px; border: 1px solid var(--luxury-border); border-radius: 6px; font-size: 0.9rem;">
+                    </div>
+                    <div style="flex: 1; min-width: 150px;">
+                        <label style="display: block; font-size: 0.8rem; color: var(--luxury-muted); margin-bottom: 5px;">Fecha de Nacimiento</label>
+                        <input type="date" name="nueva_fnac" required style="width: 100%; padding: 8px; border: 1px solid var(--luxury-border); border-radius: 6px; font-size: 0.9rem;">
+                    </div>
+                    <div>
+                        <button type="submit" class="btn-luxury" style="padding: 9px 15px; font-size: 0.85rem;"><i class="fa-solid fa-user-plus"></i> Guardar Clienta</button>
+                    </div>
+                </form>
+            </div>
+
             <div class="table-responsive">
                 <table class="luxury-table">
                     <thead>
@@ -216,7 +253,6 @@ try {
     </div>
 
     <script>
-        // Función para alternar entre pestañas de la agenda
         function switchTab(evt, sectionId) {
             const contents = document.querySelectorAll('.tab-content');
             contents.forEach(content => content.classList.remove('active'));
