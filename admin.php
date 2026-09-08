@@ -166,7 +166,7 @@ try {
                                     <td><?php echo $i++; ?></td>
                                     <td><strong><?php echo htmlspecialchars($cita['nombre_clienta']); ?></strong></td>
                                     <td><?php echo htmlspecialchars($cita['servicio']); ?></td>
-                                    <td><?php echo htmlspecialchars($cita['fecha_hora']); ?></td>
+                                    <td><?php echo htmlspecialchars($cita['fecha_cita']); ?></td>
                                     <td><span class="badge-status"><?php echo htmlspecialchars($cita['estado']); ?></span></td>
                                 </tr>
                             <?php endforeach; ?>
