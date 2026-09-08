@@ -63,8 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="agendar.css">
 </head>
-<body style="background-color: #f7f4ed; margin: 0; padding: 20px; display: flex; align-items: center; justify-content: center; min-height: 100vh;">
-
+<body class="login-body" style="display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px;">
     <div class="agenda-container">
         
         <div class="agenda-header">
