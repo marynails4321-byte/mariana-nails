@@ -1,29 +1,19 @@
 <?php
 session_start();
 
-// Configuración de conexión a PostgreSQL (Aiven)
-// Reemplaza estos valores con los datos reales de tu base de datos en Aiven
-$host = "TU_HOST_DE_AIVEN";
-$port = "5432";
-$dbname = "defaultdb";
-$user = "avnadmin";
-$password = "TU_PASSWORD_DE_AIVEN";
+// Incluimos la conexión centralizada (compatible con Render / PostgreSQL y local)
+require_once 'conexion.php';
 
 $error_db = '';
+$citas_clienta = [];
 
-// Procesar cuando el formulario es enviado por POST
+// Procesar cuando el formulario es enviado por POST (Inicio de sesión de clienta)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombre = trim($_POST['nombre'] ?? '');
     $fnacimiento = trim($_POST['fnacimiento'] ?? '');
 
     if (!empty($nombre) && !empty($fnacimiento)) {
         try {
-            // Conexión PDO con SSL requerido para Aiven
-            $dsn = "pgsql:host=$host;port=$port;dbname=$dbname;sslmode=require";
-            $pdo = new PDO($dsn, $user, $password, [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
-            ]);
-
             // 1. Verificar si la clienta ya existe en la base de datos
             $stmt = $pdo->prepare("SELECT id FROM usuarios WHERE LOWER(nombre) = LOWER(:nombre) AND fnacimiento = :fnacimiento AND rol = 'clienta'");
             $stmt->execute(['nombre' => $nombre, 'fnacimiento' => $fnacimiento]);
@@ -44,10 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['clienta_logged'] = true;
 
         } catch (PDOException $e) {
-            // Si hay un fallo de conexión temporal, permitimos el acceso visual con aviso
-            $_SESSION['nombre_clienta'] = $nombre;
-            $_SESSION['clienta_logged'] = true;
-            $error_db = "Aviso: No se pudo conectar a la base de datos de Aiven en este momento.";
+            $error_db = "Error al conectar con la base de datos: " . $e->getMessage();
         }
     } else {
         header("Location: index.php");
@@ -62,6 +49,24 @@ if (!isset($_SESSION['clienta_logged']) || $_SESSION['clienta_logged'] !== true)
 }
 
 $nombre_clienta = $_SESSION['nombre_clienta'];
+$clienta_id = $_SESSION['clienta_id'] ?? null;
+
+// ==========================================
+// CARGAR LAS CITAS REALES DE ESTA CLIENTA
+// ==========================================
+try {
+    if ($clienta_id) {
+        $stmtCitasClienta = $pdo->prepare("
+            SELECT * FROM citas 
+            WHERE clienta_id = :clienta_id 
+            ORDER BY fecha_cita DESC
+        ");
+        $stmtCitasClienta->execute(['clienta_id' => $clienta_id]);
+        $citas_clienta = $stmtCitasClienta->fetchAll(PDO::FETCH_ASSOC);
+    }
+} catch (PDOException $e) {
+    $error_db = "Error al cargar tus citas: " . $e->getMessage();
+}
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -90,36 +95,48 @@ $nombre_clienta = $_SESSION['nombre_clienta'];
 
         <?php if (!empty($error_db)): ?>
             <div style="background-color: #fdf2f2; border: 1px solid #f8d7da; color: #a94442; padding: 10px; border-radius: 8px; font-size: 0.8rem; margin-bottom: 15px;">
-                <?php echo $error_db; ?>
+                <?php echo htmlspecialchars($error_db); ?>
             </div>
         <?php endif; ?>
 
         <!-- Tarjeta de Información Principal -->
         <div style="background-color: #faf7f2; padding: 25px; border-radius: 12px; border: 1px solid var(--luxury-border); margin-bottom: 25px;">
             <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--luxury-dark); margin-top: 0; margin-bottom: 10px;">
-                <i class="fa-solid fa-calendar-check" style="color: #c57d0a; margin-right: 8px;"></i> Tu Próxima Cita
+                <i class="fa-solid fa-calendar-check" style="color: #c57d0a; margin-right: 8px;"></i> Tus Citas Registradas
             </h3>
             <p style="color: var(--luxury-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;">
-                Tus datos han sido validados correctamente en el sistema del estudio.
+                Aquí puedes visualizar el estado de tus turnos agendados en el estudio.
             </p>
 
-            <!-- Bloque de cita actual (Ejemplo visual) -->
-            <div style="background: #ffffff; padding: 15px 20px; border-radius: 8px; border: 1px solid var(--luxury-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <div>
-                    <span style="display: block; font-size: 0.8rem; color: var(--luxury-muted);">Servicio</span>
-                    <strong style="color: var(--luxury-dark); font-size: 1rem;">Estonian Manicure + Soft Gel</strong>
+            <?php if (empty($citas_clienta)): ?>
+                <!-- Estado vacío si no tiene citas aún -->
+                <div style="background: #ffffff; padding: 20px; border-radius: 8px; border: 1px solid var(--luxury-border); text-align: center; color: var(--luxury-muted);">
+                    <i class="fa-regular fa-calendar-xmark" style="font-size: 2rem; margin-bottom: 10px; display: block; color: #c57d0a;"></i>
+                    No tienes citas agendadas todavía. ¡Pronto podrás apartar tu espacio!
                 </div>
-                <div>
-                    <span style="display: block; font-size: 0.8rem; color: var(--luxury-muted);">Fecha y Hora</span>
-                    <strong style="color: var(--luxury-dark); font-size: 1rem;">10 de Jun, 2026 - 15:00</strong>
+            <?php else: ?>
+                <!-- Listado real de citas de la clienta -->
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <?php foreach ($citas_clienta as $cita): ?>
+                        <div style="background: #ffffff; padding: 15px 20px; border-radius: 8px; border: 1px solid var(--luxury-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                            <div>
+                                <span style="display: block; font-size: 0.8rem; color: var(--luxury-muted);">Servicio</span>
+                                <strong style="color: var(--luxury-dark); font-size: 1rem;"><?php echo htmlspecialchars($cita['servicio']); ?></strong>
+                            </div>
+                            <div>
+                                <span style="display: block; font-size: 0.8rem; color: var(--luxury-muted);">Fecha y Hora</span>
+                                <strong style="color: var(--luxury-dark); font-size: 1rem;"><?php echo htmlspecialchars($cita['fecha_cita']); ?></strong>
+                            </div>
+                            <div>
+                                <span class="badge-status"><?php echo htmlspecialchars($cita['estado']); ?></span>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
                 </div>
-                <div>
-                    <span class="badge-status">Confirmada</span>
-                </div>
-            </div>
+            <?php endif; ?>
         </div>
 
-        <!-- Botones de Acción (Adaptados para celular) -->
+        <!-- Botones de Acción -->
         <div style="display: flex; gap: 15px; flex-wrap: wrap;">
             <button type="button" class="btn-luxury" style="flex: 1;" onclick="alert('Próximamente: Formulario para agendar una nueva cita.');">
                 <i class="fa-solid fa-plus-circle"></i> Agendar Nueva Cita
