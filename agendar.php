@@ -98,8 +98,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="radio" name="servicio" value="Uñas Acrílicas Elegantes" required>
                     <input type="hidden" name="foto_ejemplo" value="img/acrilicas.jpg">
                     <img src="img/acrilicas.jpg" alt="Acrílicas Elegantes" onerror="this.src='https://via.placeholder.com/150?text=Acrilicas'">
-                    <div class="service-title">Acrílicas Elegantes</div>
-                    <div class="service-info">Duración: 2h • Incluye decoración</div>
+                    <div class="service-title">Sistema Press On</div>
+                    <div class="service-info">Duración aproximada: 2h • Incluye decoración</div>
                 </label>
 
                 <!-- Tarjeta 2 -->
