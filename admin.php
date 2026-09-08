@@ -76,51 +76,128 @@ endif;
 ?>
 
 <!-- ========================================== -->
-<!-- PANEL DE ADMINISTRACIÓN PRINCIPAL (AUTORIZADO) -->
+<!-- PANEL DE ADMINISTRACIÓN / AGENDA PRINCIPAL -->
 <!-- ========================================== -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Control - Mariana Nails Studio</title>
+    <title>Agenda & Panel - Mariana Nails Studio</title>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="login-body">
+<body class="login-body agenda-body-align">
 
-    <div class="login-card-luxury" style="max-width: 700px; text-align: left;">
+    <div class="agenda-container">
         
-        <!-- Cabecera del Panel Admin -->
-        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--luxury-border); padding-bottom: 20px; margin-bottom: 25px;">
+        <!-- Cabecera de la Agenda -->
+        <div class="agenda-header">
             <div>
-                <h2 style="font-family: 'Cormorant Garamond', serif; color: var(--luxury-dark); font-size: 1.8rem; margin: 0;">Panel de Administración 👑</h2>
-                <p style="color: var(--luxury-muted); font-size: 0.9rem; margin: 5px 0 0 0;">Mariana Nails Studio - Control General</p>
+                <h2 class="agenda-title">Agenda & Directorio 👑</h2>
+                <p class="agenda-subtitle-text">Mariana Nails Studio - Panel de Control Exclusivo</p>
             </div>
-            <a href="logout.php" style="color: #c57d0a; text-decoration: none; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 5px;">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i> Salir
+            <a href="logout.php" class="logout-link">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión
             </a>
         </div>
 
-        <!-- Sección de bienvenida y gestión -->
-        <div style="background-color: #faf7f2; padding: 20px; border-radius: 12px; border: 1px solid var(--luxury-border); margin-bottom: 20px;">
-            <h3 style="font-size: 1.1rem; color: var(--luxury-dark); margin-top: 0;"><i class="fa-solid fa-clipboard-list" style="color: #c57d0a; margin-right: 8px;"></i> Gestión de Clientas y Citas</h3>
-            <p style="color: var(--luxury-muted); font-size: 0.95rem; line-height: 1.5;">
-                Desde aquí podrás supervisar los accesos de las clientas, revisar sus fechas de nacimiento y gestionar los turnos agendados en el estudio.
-            </p>
+        <!-- Pestañas de Navegación -->
+        <div class="agenda-tabs">
+            <button class="tab-btn active" onclick="switchTab(event, 'citas-section')"><i class="fa-solid fa-calendar-days"></i> Agenda de Citas</button>
+            <button class="tab-btn" onclick="switchTab(event, 'clientas-section')"><i class="fa-solid fa-users"></i> Directorio de Clientas</button>
         </div>
 
-        <div style="display: flex; gap: 15px;">
-            <button type="button" class="btn-luxury" style="flex: 1;" onclick="alert('Sección para ver la lista de clientas conectada a la base de datos.');">
-                <i class="fa-solid fa-users"></i> Ver Clientas
-            </button>
-            <button type="button" class="btn-luxury" style="flex: 1; background: linear-gradient(135deg, #3a2e2b 0%, #2b2d42 100%); color: #ffffff;" onclick="alert('Sección de turnos y citas próximas.');">
-                <i class="fa-solid fa-calendar-days"></i> Ver Citas
-            </button>
+        <!-- SECCIÓN 1: AGENDA DE CITAS -->
+        <div id="citas-section" class="tab-content active">
+            <div class="section-flex-header">
+                <h3 class="section-title">Próximos Turnos Agendados</h3>
+                <span class="section-hint">Vista general de la agenda</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="luxury-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Clienta</th>
+                            <th>Servicio Solicitado</th>
+                            <th>Fecha y Hora</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Datos de ejemplo (se conectarán dinámicamente con PostgreSQL) -->
+                        <tr>
+                            <td>1</td>
+                            <td><strong>Sofía Valdés</strong></td>
+                            <td>Estonian Manicure + Soft Gel</td>
+                            <td>10 de Jun, 2026 - 15:00</td>
+                            <td><span class="badge-status">Confirmada</span></td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td><strong>Valentina Gómez</strong></td>
+                            <td>Nail Art Minimalista & Kapping</td>
+                            <td>12 de Jun, 2026 - 11:30</td>
+                            <td><span class="badge-status">Confirmada</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SECCIÓN 2: DIRECTORIO DE CLIENTAS -->
+        <div id="clientas-section" class="tab-content">
+            <div class="section-flex-header">
+                <h3 class="section-title">Registro de Clientas</h3>
+                <span class="section-hint">Datos de acceso y cumpleaños</span>
+            </div>
+
+            <div class="table-responsive">
+                <table class="luxury-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Nombre Completo</th>
+                            <th>Fecha de Nacimiento</th>
+                            <th>Registro</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Datos de ejemplo (se conectarán dinámicamente con PostgreSQL) -->
+                        <tr>
+                            <td>1</td>
+                            <td><strong>Sofía Valdés</strong></td>
+                            <td>15 / 04 / 1998</td>
+                            <td>06/06/2026</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td><strong>Valentina Gómez</strong></td>
+                            <td>22 / 09 / 2001</td>
+                            <td>07/06/2026</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
 
     </div>
 
+    <script>
+        // Función para alternar entre pestañas de la agenda
+        function switchTab(evt, sectionId) {
+            const contents = document.querySelectorAll('.tab-content');
+            contents.forEach(content => content.classList.remove('active'));
+
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            document.getElementById(sectionId).classList.add('active');
+            evt.currentTarget.classList.add('active');
+        }
+    </script>
 </body>
 </html>
