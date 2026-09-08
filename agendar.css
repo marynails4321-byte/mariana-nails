@@ -1,0 +1,130 @@
+/* ========================================== */
+/* TEMÁTICA LUXURY - AGENDAR CITA             */
+/* ========================================== */
+
+:root {
+    --luxury-gold: #d4af37;
+    --luxury-gold-light: #fdfcf7;
+    --luxury-gold-hover: #c59b27;
+    --luxury-border: #e2d9cc;
+    --luxury-text: #2c2c2c;
+    --luxury-muted: #8c8275;
+    --luxury-bg-card: #ffffff;
+}
+
+/* Contenedor de las tarjetas de servicios */
+.services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+    margin-bottom: 22px;
+}
+
+/* Tarjeta individual de servicio estilo Luxury */
+.service-card {
+    border: 1.5px solid var(--luxury-border);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--luxury-bg-card);
+    position: relative;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+.service-card:hover {
+    border-color: var(--luxury-gold);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(212, 175, 55, 0.1);
+}
+
+/* Imagen miniatura de la tarjeta */
+.service-card img {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    filter: brightness(0.96);
+    transition: filter 0.3s ease;
+}
+
+.service-card:hover img {
+    filter: brightness(1);
+}
+
+.service-card input[type="radio"] {
+    display: none;
+}
+
+/* Estado seleccionado de la tarjeta (Toque Dorado) */
+.service-card.selected {
+    border-color: var(--luxury-gold);
+    background-color: var(--luxury-gold-light);
+    box-shadow: 0 4px 16px rgba(212, 175, 55, 0.22);
+}
+
+.service-card.selected::after {
+    content: '\f058'; /* Icono check de FontAwesome */
+    font-family: 'Font Awesome 6 Free';
+    font-weight: 900;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    color: var(--luxury-gold);
+    font-size: 1.1rem;
+    background: #fff;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.service-title {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--luxury-text);
+    letter-spacing: -0.2px;
+}
+
+/* Alertas de Error y Éxito personalizadas a la paleta */
+.alert-error {
+    background-color: #fdf2f2;
+    border: 1px solid #f8d7da;
+    color: #9c3c3c;
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.alert-success {
+    background-color: #f2f9f5;
+    border: 1px solid #d1e7dd;
+    color: #0f5132;
+    padding: 12px 15px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    margin-bottom: 20px;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Ajustes finos para los inputs de calendario/hora para que armonicen con el formulario */
+.agenda-container .form-group-luxury label {
+    font-family: 'Inter', sans-serif;
+    font-weight: 500;
+    font-size: 0.9rem;
+    color: var(--luxury-text);
+}

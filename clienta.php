@@ -142,8 +142,9 @@ try {
 
         <!-- Botones de Acción -->
         <div style="display: flex; gap: 15px; flex-wrap: wrap;">
-            <button type="button" class="btn-luxury" style="flex: 1;" onclick="alert('Próximamente: Formulario para agendar una nueva cita.');">
-                <i class="fa-solid fa-plus-circle"></i> Agendar Nueva Cita
+            <a href="agendar.php" class="btn-luxury" style="flex: 1; text-decoration: none; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
+    <i class="fa-solid fa-plus-circle"></i> Agendar Nueva Cita
+</a>
             </button>
             <button type="button" class="btn-luxury" style="flex: 1; background: linear-gradient(135deg, #3a2e2b 0%, #2b2d42 100%); color: #ffffff;" onclick="alert('Próximamente: Historial de tus servicios anteriores.');">
                 <i class="fa-solid fa-clock-rotate-left"></i> Historial de Turnos
