@@ -90,28 +90,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form action="agendar.php" method="POST">
             
-            <label class="form-label-luxury">1. Selecciona el Diseño o Servicio:</label>
+        <label class="form-label-luxury">1. Selecciona el Diseño o Servicio:</label>
             <div class="services-grid">
                 
+                <!-- Tarjeta 1 -->
                 <label class="service-card" onclick="selectService(this)">
                     <input type="radio" name="servicio" value="Uñas Acrílicas Elegantes" required>
-                    <input type="hidden" name="foto_ejemplo" value="Acrílicas Elegantes">
-                    <div class="service-icon"><i class="fa-solid fa-hand-sparkles"></i></div>
+                    <input type="hidden" name="foto_ejemplo" value="img/acrilicas.jpg">
+                    <img src="img/acrilicas.jpg" alt="Acrílicas Elegantes" onerror="this.src='https://via.placeholder.com/150?text=Acrilicas'">
                     <div class="service-title">Acrílicas Elegantes</div>
+                    <div class="service-info">Duración: 2h • Incluye decoración</div>
                 </label>
 
+                <!-- Tarjeta 2 -->
                 <label class="service-card" onclick="selectService(this)">
                     <input type="radio" name="servicio" value="Esmaltado Semipermanente">
-                    <input type="hidden" name="foto_ejemplo" value="Esmaltado Semipermanente">
-                    <div class="service-icon"><i class="fa-solid fa-gem"></i></div>
+                    <input type="hidden" name="foto_ejemplo" value="img/semi.jpg">
+                    <img src="img/semi.jpg" alt="Semipermanente" onerror="this.src='https://via.placeholder.com/150?text=Semi'">
                     <div class="service-title">Semipermanente</div>
+                    <div class="service-info">Duración: 1h 15m • Brillo extremo</div>
                 </label>
 
+                <!-- Tarjeta 3 -->
                 <label class="service-card" onclick="selectService(this)">
                     <input type="radio" name="servicio" value="Kapping Gel">
-                    <input type="hidden" name="foto_ejemplo" value="Kapping Gel">
-                    <div class="service-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                    <input type="hidden" name="foto_ejemplo" value="img/kapping.jpg">
+                    <img src="img/kapping.jpg" alt="Kapping Gel" onerror="this.src='https://via.placeholder.com/150?text=Kapping'">
                     <div class="service-title">Kapping Gel</div>
+                    <div class="service-info">Duración: 1h 30m • Protege tu uña</div>
+                </label>
+
+                <!-- Tarjeta 4 (Nueva) -->
+                <label class="service-card" onclick="selectService(this)">
+                    <input type="radio" name="servicio" value="Nail Art Exclusivo">
+                    <input type="hidden" name="foto_ejemplo" value="img/nailart.jpg">
+                    <img src="img/nailart.jpg" alt="Nail Art" onerror="this.src='https://via.placeholder.com/150?text=NailArt'">
+                    <div class="service-title">Nail Art Exclusivo</div>
+                    <div class="service-info">Diseños a mano alzada y efectos</div>
                 </label>
 
             </div>
