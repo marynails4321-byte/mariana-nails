@@ -38,11 +38,11 @@ if (isset($_COOKIE['cookie_clienta_id']) && isset($_COOKIE['cookie_clienta_nombr
         <!-- Formulario para la Clienta apuntando a clienta.php por POST -->
         <form action="clienta.php" method="POST">
             <!-- Campo Nombre -->
-            <div class="form-group-luxury">
-                <label for="nombre">Nombre de Clienta</label>
+                    <div class="form-group-luxury">
+                <label for="nombre">Nombre y Apellido</label>
                 <div class="input-wrapper">
                     <i class="fa-regular fa-user"></i>
-                    <input type="text" id="nombre" name="nombre" placeholder="Ej. Sofía" required>
+                    <input type="text" id="nombre" name="nombre" placeholder="Ej. Sofía Pérez" required>
                 </div>
             </div>
 
