@@ -12,7 +12,6 @@ $nombre_clienta = $_SESSION['nombre_clienta'];
 $error = '';
 $exito = '';
 
-// Obtener los servicios dinámicos desde la base de datos
 try {
     $stmtServicios = $pdo->query("SELECT * FROM servicios ORDER BY id ASC");
     $servicios_db = $stmtServicios->fetchAll(PDO::FETCH_ASSOC);

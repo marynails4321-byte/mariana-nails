@@ -2,16 +2,9 @@
 session_start();
 require_once 'conexion.php';
 
-// Asegúrate de validar que sea el administrador (ajusta la validación según tu sesión de admin)
-// if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true) {
-//     header("Location: index.php");
-//     exit();
-// }
-
 $error = '';
 $exito = '';
 
-// Procesar el formulario cuando se actualiza un servicio
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'actualizar_servicio') {
     $id_servicio = intval($_POST['id']);
     $nuevo_precio = floatval($_POST['precio']);
@@ -34,7 +27,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
-// Obtener todos los servicios de la base de datos
 try {
     $stmtServicios = $pdo->query("SELECT * FROM servicios ORDER BY id ASC");
     $servicios_db = $stmtServicios->fetchAll(PDO::FETCH_ASSOC);
@@ -51,7 +43,7 @@ try {
     <title>Modificar Servicios - Mariana Nails Studio</title>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="admin.css"> <!-- O tu archivo CSS principal -->
+    <link rel="stylesheet" href="admin.css">
 </head>
 <body style="display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px; background-color: #f7f4ed;">
     
@@ -96,13 +88,11 @@ try {
                             </div>
                         </div>
 
-                        <!-- Campo para modificar Precio -->
                         <div style="display: flex; flex-direction: column; gap: 4px;">
                             <label style="font-size: 0.75rem; font-weight: 500; color: #8c8275;">Precio ($):</label>
                             <input type="number" step="0.01" name="precio" value="<?php echo $serv['precio']; ?>" required style="width: 100%; padding: 8px; border: 1px solid #e2d9cc; border-radius: 6px; background: #fff; box-sizing: border-box;">
                         </div>
 
-                        <!-- Campo para modificar la Ruta de la Imagen -->
                         <div style="display: flex; flex-direction: column; gap: 4px;">
                             <label style="font-size: 0.75rem; font-weight: 500; color: #8c8275;">Ruta de la Imagen (ej. img/nombre.jpg):</label>
                             <input type="text" name="foto" value="<?php echo htmlspecialchars($serv['foto']); ?>" required style="width: 100%; padding: 8px; border: 1px solid #e2d9cc; border-radius: 6px; background: #fff; box-sizing: border-box; font-size: 0.8rem;">
@@ -117,8 +107,5 @@ try {
         </div>
 
     </div>
-
 </body>
 </html>
-
-/*ahh
