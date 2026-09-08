@@ -12,9 +12,18 @@ $nombre_clienta = $_SESSION['nombre_clienta'];
 $error = '';
 $exito = '';
 
+// Obtener los servicios dinámicos desde la base de datos
+try {
+    $stmtServicios = $pdo->query("SELECT * FROM servicios ORDER BY id ASC");
+    $servicios_db = $stmtServicios->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $servicios_db = [];
+    $error = "Error al cargar los servicios disponibles.";
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $servicio = isset($_POST['servicio']) ? trim($_POST['servicio']) : '';
-    $foto_ejemplo = isset($_POST['foto_ejemplo']) ? trim($_POST['foto_ejemplo']) : 'Icono Luxury';
+    $foto_ejemplo = isset($_POST['foto_ejemplo']) ? trim($_POST['foto_ejemplo']) : 'img/default.jpg';
     $fecha_seleccionada = isset($_POST['fecha']) ? trim($_POST['fecha']) : '';
     $hora_seleccionada = isset($_POST['hora']) ? trim($_POST['hora']) : '';
 
@@ -90,44 +99,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form action="agendar.php" method="POST">
             
-        <label class="form-label-luxury">1. Selecciona el Diseño o Servicio:</label>
+            <label class="form-label-luxury">1. Selecciona el Diseño o Servicio:</label>
             <div class="services-grid">
                 
-                <!-- Tarjeta 1 -->
-                <label class="service-card" onclick="selectService(this)">
-                    <input type="radio" name="servicio" value="Uñas Acrílicas Elegantes" required>
-                    <input type="hidden" name="foto_ejemplo" value="img/acrilicas.jpg">
-                    <img src="img/acrilicas.jpg" alt="Acrílicas Elegantes" onerror="this.src='https://via.placeholder.com/150?text=Acrilicas'">
-                    <div class="service-title">Sistema Press On</div>
-                    <div class="service-info">Duración aproximada: 2h • Incluye decoración</div>
-                </label>
-
-                <!-- Tarjeta 2 -->
-                <label class="service-card" onclick="selectService(this)">
-                    <input type="radio" name="servicio" value="Esmaltado Semipermanente">
-                    <input type="hidden" name="foto_ejemplo" value="img/semi.jpg">
-                    <img src="img/semi.jpg" alt="Semipermanente" onerror="this.src='https://via.placeholder.com/150?text=Semi'">
-                    <div class="service-title">Semipermanente</div>
-                    <div class="service-info">Duración: 1h 15m • Brillo extremo</div>
-                </label>
-
-                <!-- Tarjeta 3 -->
-                <label class="service-card" onclick="selectService(this)">
-                    <input type="radio" name="servicio" value="Kapping Gel">
-                    <input type="hidden" name="foto_ejemplo" value="img/kapping.jpg">
-                    <img src="img/kapping.jpg" alt="Kapping Gel" onerror="this.src='https://via.placeholder.com/150?text=Kapping'">
-                    <div class="service-title">Kapping Gel</div>
-                    <div class="service-info">Duración: 1h 30m • Protege tu uña</div>
-                </label>
-
-                <!-- Tarjeta 4 (Nueva) -->
-                <label class="service-card" onclick="selectService(this)">
-                    <input type="radio" name="servicio" value="Nail Art Exclusivo">
-                    <input type="hidden" name="foto_ejemplo" value="img/nailart.jpg">
-                    <img src="img/nailart.jpg" alt="Nail Art" onerror="this.src='https://via.placeholder.com/150?text=NailArt'">
-                    <div class="service-title">Nail Art Exclusivo</div>
-                    <div class="service-info">Diseños a mano alzada y efectos</div>
-                </label>
+                <?php if (empty($servicios_db)): ?>
+                    <p style="color: var(--luxury-muted); grid-column: 1 / -1; text-align: center;">No hay servicios disponibles en este momento.</p>
+                <?php else: ?>
+                    <?php foreach ($servicios_db as $serv): ?>
+                        <label class="service-card" onclick="selectService(this)">
+                            <input type="radio" name="servicio" value="<?php echo htmlspecialchars($serv['nombre']); ?>" required>
+                            <input type="hidden" name="foto_ejemplo" value="<?php echo htmlspecialchars($serv['foto']); ?>">
+                            <img src="<?php echo htmlspecialchars($serv['foto']); ?>" alt="<?php echo htmlspecialchars($serv['nombre']); ?>" onerror="this.src='https://via.placeholder.com/150?text=Nails'">
+                            <div class="service-title"><?php echo htmlspecialchars($serv['nombre']); ?></div>
+                            <div class="service-info">Precio: $<?php echo number_format($serv['precio'], 0, ',', '.'); ?></div>
+                        </label>
+                    <?php endforeach; ?>
+                <?php endif; ?>
 
             </div>
 
