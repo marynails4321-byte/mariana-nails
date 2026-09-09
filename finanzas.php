@@ -14,7 +14,6 @@ if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true) {
     }
 }
 
-// Si no ha iniciado sesión, redirigir al login principal
 if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true) {
     header("Location: admin.php");
     exit();
@@ -65,20 +64,23 @@ if (isset($_GET['eliminar_finanza'])) {
 // ==========================================
 // OBTENER DATOS Y CALCULAR TOTALES
 // ==========================================
+$totalIngresos = 0;
+$totalGastos = 0;
+$ganancia_total = 0;
+$movimientos = [];
+
 try {
     $stmtFinanzas = $pdo->query("SELECT * FROM finanzas ORDER BY fecha DESC, id DESC");
     $movimientos = $stmtFinanzas->fetchAll(PDO::FETCH_ASSOC);
 
-    $totalIngresos = 0;
-    $totalGastos = 0;
     foreach ($movimientos as $m) {
         if ($m['tipo'] === 'ingreso') {
-            $totalIngresos += $m['monto'];
+            $totalIngresos += floatval($m['monto']);
         } else {
-            $totalGastos += $m['monto'];
+            $totalGastos += floatval($m['monto']);
         }
     }
-    $gananciaTotal = $totalIngresos - $totalGastos;
+    $ganancia_total = $totalIngresos - $totalGastos;
 
 } catch (PDOException $e) {
     $error_db = "Error al cargar la base de datos: " . $e->getMessage();
@@ -92,10 +94,9 @@ try {
     <title>Control Financiero - Mariana Nails Studio</title>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Tus estilos generales del panel -->
     <link rel="stylesheet" href="admin.css">
-    <!-- Estilos específicos de finanzas separados -->
-    <link rel="stylesheet" href="finanzas.css">
+    <!-- Archivo CSS independiente con control anti-caché -->
+    <link rel="stylesheet" href="finanzas.css?v=<?php echo time(); ?>">
 </head>
 <body class="login-body agenda-body-align">
 
@@ -111,7 +112,6 @@ try {
             </a>
         </div>
 
-        <!-- MENÚ DE NAVEGACIÓN ENTRE PANELES -->
         <div class="nav-admin-menu">
             <a href="admin.php" class="nav-btn"><i class="fa-solid fa-calendar-days"></i> Agenda y Clientas</a>
             <a href="Admin_servicios.php" class="nav-btn"><i class="fa-solid fa-sliders"></i> Gestionar Servicios</a>
@@ -142,44 +142,52 @@ try {
             </div>
             <div class="finanza-card card-ganancia">
                 <div class="finanza-card-title"><i class="fa-solid fa-wallet" style="color: #d97706;"></i> Ganancia Neta Total</div>
-                <div class="finanza-card-amount" style="color: #b45309;">$<?php echo number_format($gananciaTotal, 2); ?></div>
+                <div class="finanza-card-amount" style="color: #b45309;">$<?php echo number_format($ganancia_total, 2); ?></div>
             </div>
         </div>
 
-     <!-- FORMULARIO RÁPIDO PARA REGISTRAR -->
+        <!-- FORMULARIO VERTICAL ORDENADO Y ELEGANTE -->
         <div class="finanza-form-container">
-            <h4 style="margin-top: 0; margin-bottom: 18px; font-size: 1.05rem; color: #374151; font-weight: 600;">
+            <h4 class="finanza-form-title">
                 <i class="fa-solid fa-circle-plus" style="color: #d97706;"></i> Registrar Nuevo Movimiento
             </h4>
-            <form action="finanzas.php" method="POST" class="finanza-form-grid">
+            
+            <form action="finanzas.php" method="POST" class="finanza-form">
                 <input type="hidden" name="accion" value="registrar_finanza">
                 
-                <div class="finanza-input-group">
-                    <label>Tipo</label>
-                    <select name="tipo_movimiento" required>
-                        <option value="ingreso">🟢 Ingreso</option>
-                        <option value="gasto" selected>🔴 Gasto</option>
-                    </select>
+                <!-- Fila 1: Tipo y Fecha -->
+                <div class="form-row-grid">
+                    <div class="finanza-input-group">
+                        <label>Tipo de Movimiento</label>
+                        <select name="tipo_movimiento" required>
+                            <option value="ingreso">🟢 Ingreso</option>
+                            <option value="gasto" selected>🔴 Gasto</option>
+                        </select>
+                    </div>
+
+                    <div class="finanza-input-group">
+                        <label>Fecha</label>
+                        <input type="date" name="fecha_movimiento" value="<?php echo date('Y-m-d'); ?>" required>
+                    </div>
                 </div>
 
-                <div class="finanza-input-group">
-                    <label>Concepto / Descripción</label>
-                    <input type="text" name="concepto" placeholder="Ej. Compra de acrílico" required>
+                <!-- Fila 2: Concepto y Monto -->
+                <div class="form-row-grid-wide">
+                    <div class="finanza-input-group">
+                        <label>Concepto / Descripción</label>
+                        <input type="text" name="concepto" placeholder="Ej. Compra de acrílico o Servicio" required>
+                    </div>
+
+                    <div class="finanza-input-group">
+                        <label>Monto ($)</label>
+                        <input type="number" step="0.01" name="monto" placeholder="Ej. 15000" required>
+                    </div>
                 </div>
 
-                <div class="finanza-input-group">
-                    <label>Monto ($)</label>
-                    <input type="number" step="0.01" name="monto" placeholder="Ej. 15000" required>
-                </div>
-
-                <div class="finanza-input-group">
-                    <label>Fecha</label>
-                    <input type="date" name="fecha_movimiento" value="<?php echo date('Y-m-d'); ?>" required>
-                </div>
-
-                <div>
+                <!-- Fila 3: Botón de Ancho Completo -->
+                <div style="margin-top: 5px;">
                     <button type="submit" class="btn-luxury btn-guardar-finanza">
-                        <i class="fa-solid fa-floppy-disk"></i> Guardar
+                        <i class="fa-solid fa-floppy-disk"></i> Guardar Movimiento Financiero
                     </button>
                 </div>
             </form>

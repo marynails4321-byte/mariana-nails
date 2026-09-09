@@ -4,6 +4,7 @@ require_once 'conexion.php';
 
 $error = '';
 $mensaje_exito = '';
+$error_db = '';
 
 // ==========================================
 // VERIFICAR COOKIE PERSISTENTE DE ADMINISTRADOR
@@ -23,10 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password']) && !isset
 
     if ($password_ingresada === $password_correcta) {
         $_SESSION['admin_logged'] = true;
-        
-        // Crear cookie de administrador por 30 días
         setcookie('cookie_admin_logged', 'true', time() + (86400 * 30), "/");
-
         header("Location: admin.php");
         exit();
     } else {
@@ -34,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password']) && !isset
     }
 }
 
-// Si el administrador NO ha iniciado sesión, mostramos el formulario de acceso
+// Si el administrador NO ha iniciado sesión, mostrar login
 if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true):
 ?>
 <!DOCTYPE html>
@@ -48,12 +46,10 @@ if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true):
     <link rel="stylesheet" href="index.css">
 </head>
 <body class="login-body">
-
     <div class="login-card-luxury">
         <div class="logo-container">
             <img src="Logo.png" alt="Mariana Nails Studio" class="brand-logo">
         </div>
-        
         <p class="login-subtitle">Acceso Exclusivo - Administración</p>
 
         <?php if (!empty($error)): ?>
@@ -70,7 +66,6 @@ if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true):
                     <input type="password" id="password" name="password" placeholder="Ingresa tu contraseña" required>
                 </div>
             </div>
-
             <button type="submit" class="btn-luxury">Ingresar al Panel</button>
         </form>
 
@@ -80,7 +75,6 @@ if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true):
             </a>
         </div>
     </div>
-
 </body>
 </html>
 <?php 
@@ -88,7 +82,7 @@ exit();
 endif; 
 
 // ==========================================
-// PROCESAR ACCIONES DE CITA (Confirmar o Rechazar/Eliminar)
+// PROCESAR ACCIONES DE CITA
 // ==========================================
 if (isset($_GET['cambiar_estado']) && isset($_GET['id_cita'])) {
     $id_cita = intval($_GET['id_cita']);
@@ -96,11 +90,9 @@ if (isset($_GET['cambiar_estado']) && isset($_GET['id_cita'])) {
     
     try {
         if ($accion === 'confirmar') {
-            // Cambia el estado a Confirmada
             $stmtEstado = $pdo->prepare("UPDATE citas SET estado = 'Confirmada' WHERE id = :id_cita");
             $stmtEstado->execute(['id_cita' => $id_cita]);
         } elseif ($accion === 'rechazar') {
-            // Elimina la cita por completo para liberar el horario
             $stmtEliminar = $pdo->prepare("DELETE FROM citas WHERE id = :id_cita");
             $stmtEliminar->execute(['id_cita' => $id_cita]);
         }
@@ -112,7 +104,7 @@ if (isset($_GET['cambiar_estado']) && isset($_GET['id_cita'])) {
 }
 
 // ==========================================
-// PROCESAR NUEVA CLIENTA DESDE EL PANEL ADMIN
+// PROCESAR NUEVA CLIENTA
 // ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'crear_clienta') {
     $nuevo_nombre = trim($_POST['nuevo_nombre'] ?? '');
@@ -132,7 +124,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 }
 
 // ==========================================
-// OBTENER DATOS DE LA BASE DE DATOS
+// OBTENER DATOS
 // ==========================================
 try {
     $stmtClientas = $pdo->query("SELECT * FROM usuarios WHERE rol = 'clienta' ORDER BY id DESC");
@@ -145,15 +137,10 @@ try {
         ORDER BY c.fecha_cita DESC
     ");
     $citas = $stmtCitas->fetchAll(PDO::FETCH_ASSOC);
-
 } catch (PDOException $e) {
     $error_db = "Error al cargar la base de datos: " . $e->getMessage();
 }
 ?>
-
-<!-- ========================================== -->
-<!-- PANEL DE ADMINISTRACIÓN / AGENDA PRINCIPAL -->
-<!-- ========================================== -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -185,21 +172,24 @@ try {
 </head>
 <body class="login-body agenda-body-align">
 
-    <div class="agenda-container">
+    <div class="agenda-container" style="max-width: 1000px; width: 100%;">
         
+        <!-- ENCABEZADO PRINCIPAL -->
         <div class="agenda-header">
             <div>
                 <h2 class="agenda-title">Agenda & Directorio 👑</h2>
                 <p class="agenda-subtitle-text">Mariana Nails Studio - Panel de Control Exclusivo</p>
             </div>
-            <a href="logout.php" class="logout-link">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión
+            <a href="logout.php" class="logout-link" style="padding: 8px 14px; background: #fff; border: 1px solid #e5e7eb; border-radius: 6px; color: #ef4444; text-decoration: none; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 5px;">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Salir
             </a>
+        </div>
+
+        <!-- MENÚ DE NAVEGACIÓN UNIFICADO -->
+        <div class="nav-admin-menu">
+            <a href="admin.php" class="nav-btn active"><i class="fa-solid fa-calendar-days"></i> Agenda y Clientas</a>
+            <a href="Admin_servicios.php" class="nav-btn"><i class="fa-solid fa-sliders"></i> Gestionar Servicios</a>
             <a href="finanzas.php" class="nav-btn"><i class="fa-solid fa-wallet"></i> Control Financiero</a>
-            
-            <a href="Admin_servicios.php" class="btn-luxury" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px;">
-                <i class="fa-solid fa-sliders"></i> Gestionar Precios e Imágenes de Servicios
-            </a>
         </div>
 
         <?php if (!empty($error_db)): ?>
@@ -261,7 +251,6 @@ try {
                                         </span>
                                     </td>
                                     <td>
-                                        <!-- Botones de Aceptar y Rechazar (Eliminar) -->
                                         <a href="admin.php?cambiar_estado=confirmar&id_cita=<?php echo $cita['id']; ?>" class="btn-accion-aceptar" title="Aceptar cita">
                                             <i class="fa-solid fa-check"></i> Aceptar
                                         </a>
@@ -284,7 +273,7 @@ try {
                 <span class="section-hint">Datos de acceso y cumpleaños</span>
             </div>
 
-            <!-- Formulario pequeño para registrar clienta desde el Admin -->
+            <!-- Formulario pequeño para registrar clienta -->
             <div style="background: #faf7f2; padding: 15px 20px; border-radius: 8px; border: 1px solid var(--luxury-border); margin-bottom: 20px;">
                 <form action="admin.php" method="POST" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
                     <input type="hidden" name="accion" value="crear_clienta">

@@ -1,8 +1,8 @@
 /* ==========================================
-   ESTILOS COMPLETOS - MÓDULO FINANCIERO
+   ESTILOS - MÓDULO FINANCIERO (LUXURY)
    ========================================== */
 
-/* Cuadrícula de tarjetas de resumen superior */
+/* Tarjetas de resumen superior */
 .finanzas-cards-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -10,7 +10,6 @@
     margin-bottom: 25px;
 }
 
-/* Estilo general de las tarjetas financieras */
 .finanza-card {
     background: #fff;
     padding: 20px;
@@ -21,13 +20,12 @@
     overflow: hidden;
 }
 
-/* Franja decorativa lateral en cada tarjeta */
 .finanza-card::after {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 4px;
+    top: 0; 
+    left: 0; 
+    width: 4px; 
     height: 100%;
 }
 
@@ -35,82 +33,79 @@
 .card-gastos::after { background-color: #ef4444; }
 .card-ganancia::after { background-color: #d97706; }
 
-/* Títulos y montos dentro de las tarjetas */
 .finanza-card-title {
-    font-size: 0.85rem;
-    color: #6b7280;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 8px;
+    font-size: 0.85rem; 
+    color: #6b7280; 
+    text-transform: uppercase; 
+    letter-spacing: 0.5px; 
+    margin-bottom: 8px; 
     font-weight: 500;
 }
 
 .finanza-card-amount {
-    font-size: 1.6rem;
+    font-size: 1.6rem; 
     font-weight: 700;
 }
 
-/* Badges o etiquetas de estado para la tabla */
-.badge-ingreso {
-    background-color: #d1e7dd;
-    color: #0f5132;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 600;
+/* Badges de estado */
+.badge-ingreso { 
+    background-color: #d1e7dd; 
+    color: #0f5132; 
+    padding: 4px 8px; 
+    border-radius: 6px; 
+    font-size: 0.75rem; 
+    font-weight: 600; 
 }
 
-.badge-gasto {
-    background-color: #f8d7da;
-    color: #842029;
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    font-weight: 600;
+.badge-gasto { 
+    background-color: #f8d7da; 
+    color: #842029; 
+    padding: 4px 8px; 
+    border-radius: 6px; 
+    font-size: 0.75rem; 
+    font-weight: 600; 
 }
 
-/* Barra de navegación superior entre paneles */
+/* Menú de navegación superior */
 .nav-admin-menu {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 25px;
-    border-bottom: 2px solid #e5e7eb;
-    padding-bottom: 12px;
+    display: flex; 
+    gap: 10px; 
+    margin-bottom: 25px; 
+    border-bottom: 2px solid #e5e7eb; 
+    padding-bottom: 12px; 
     flex-wrap: wrap;
 }
 
 .nav-btn {
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    font-weight: 500;
-    text-decoration: none;
-    border: 1px solid var(--luxury-border, #e5e7eb);
-    background: #faf7f2;
-    color: #374151;
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
+    padding: 8px 16px; 
+    border-radius: 6px; 
+    font-size: 0.85rem; 
+    font-weight: 500; 
+    text-decoration: none; 
+    border: 1px solid var(--luxury-border, #e5e7eb); 
+    background: #faf7f2; 
+    color: #374151; 
+    display: inline-flex; 
+    align-items: center; 
+    gap: 8px; 
     transition: all 0.2s;
 }
 
-.nav-btn.active {
-    background: #111;
-    color: #fff;
-    border-color: #111;
+.nav-btn.active { 
+    background: #111; 
+    color: #fff; 
+    border-color: #111; 
 }
 
-.nav-btn:hover {
-    background: #eee;
+.nav-btn:hover { 
+    background: #eee; 
 }
 
-.nav-btn.active:hover {
-    background: #222;
+.nav-btn.active:hover { 
+    background: #222; 
 }
 
-/* ==========================================
-   FORMULARIO FINANCIERO EN CUADRÍCULA
-   ========================================== */
+/* Formulario Financiero Estilizado (Vertical y Limpio) */
 .finanza-form-container {
     background: #faf7f2;
     padding: 25px;
@@ -120,11 +115,30 @@
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.01);
 }
 
-.finanza-form-grid {
-    display: grid;
-    grid-template-columns: 160px 2fr 1fr 150px auto;
+.finanza-form-title {
+    margin-top: 0;
+    margin-bottom: 20px;
+    font-size: 1.05rem;
+    color: #374151;
+    font-weight: 600;
+}
+
+.finanza-form {
+    display: flex;
+    flex-direction: column;
     gap: 15px;
-    align-items: flex-end;
+}
+
+.form-row-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.form-row-grid-wide {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 15px;
 }
 
 .finanza-input-group {
@@ -148,34 +162,30 @@
     font-size: 0.9rem;
     background: #fff;
     color: #1f2937;
-    transition: border-color 0.2s, box-shadow 0.2s;
+    outline: none;
+    transition: border-color 0.2s;
 }
 
 .finanza-input-group input:focus,
 .finanza-input-group select:focus {
-    outline: none;
     border-color: #d97706;
-    box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
 }
 
 .btn-guardar-finanza {
-    padding: 11px 20px;
-    font-size: 0.9rem;
-    height: 42px;
-    display: inline-flex;
+    width: 100%;
+    padding: 12px;
+    font-size: 0.95rem;
+    display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
-    white-space: nowrap;
+    cursor: pointer;
 }
 
-/* Responsivo para pantallas pequeñas y celulares */
-@media (max-width: 900px) {
-    .finanza-form-grid {
-        grid-template-columns: 1fr 1fr;
-    }
-    .finanza-form-grid .btn-guardar-finanza {
-        grid-column: span 2;
-        width: 100%;
+/* Responsivo para celulares */
+@media (max-width: 768px) {
+    .form-row-grid,
+    .form-row-grid-wide {
+        grid-template-columns: 1fr !important;
     }
 }
