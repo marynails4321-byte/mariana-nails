@@ -98,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <form action="agendar.php" method="POST">
             
-            <label class="form-label-luxury">1. Selecciona el Servicio:</label>
+            <label class="form-label-luxury">1. Selecciona el servicio que deseas:</label>
             <div class="services-grid">
                 
                 <?php if (empty($servicios_db)): ?>
