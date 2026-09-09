@@ -10,26 +10,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $nuevo_precio = floatval($_POST['precio']);
     $ruta_foto = trim($_POST['foto_actual']); // Mantenemos la foto actual por defecto
 
-    // Usamos el ID del servicio para apuntar exactamente al input de archivo correspondiente
     $file_input_name = 'imagen_' . $id_servicio;
 
-    // Verificar si se subió una nueva imagen para este servicio en específico
+    // Verificar si se seleccionó un nuevo archivo de imagen
     if (isset($_FILES[$file_input_name]) && $_FILES[$file_input_name]['error'] === UPLOAD_ERR_OK) {
-        $nombre_archivo = basename($_FILES[$file_input_name]['name']);
-        $nombre_archivo = preg_replace('/[^a-zA-Z0-9_\.-]/', '_', $nombre_archivo);
-        $carpeta_destino = 'img/';
-        
-        if (!is_dir($carpeta_destino)) {
-            mkdir($carpeta_destino, 0755, true);
-        }
+        $file_tmp = $_FILES[$file_input_name]['tmp_name'];
+        $file_type = mime_content_type($file_tmp);
 
-        $ruta_destino = $carpeta_destino . time() . '_' . $id_servicio . '_' . $nombre_archivo;
-
-        if (move_uploaded_file($_FILES[$file_input_name]['tmp_name'], $ruta_destino)) {
-            $ruta_foto = $ruta_destino;
+        // Validar que realmente sea una imagen
+        if (strpos($file_type, 'image/') === 0) {
+            // Leer el contenido binario del archivo y convertirlo a Base64 para guardarlo en la BD
+            $file_data = file_get_contents($file_tmp);
+            $base64_image = 'data:' . $file_type . ';base64,' . base64_encode($file_data);
+            $ruta_foto = $base64_image;
         } else {
-            $error = "Hubo un error al subir la imagen para el servicio ID #$id_servicio.";
+            $error = "Por favor selecciona un archivo de imagen válido.";
         }
+    } elseif (isset($_FILES[$file_input_name]) && $_FILES[$file_input_name]['error'] !== UPLOAD_ERR_NO_FILE) {
+        $error = "Hubo un error al procesar el archivo seleccionado.";
     }
 
     if (empty($error)) {
@@ -100,7 +98,7 @@ try {
                 <p style="color: #8c8275; grid-column: 1 / -1; text-align: center;">No hay servicios registrados.</p>
             <?php else: ?>
                 <?php foreach ($servicios_db as $serv): ?>
-                    <form action="Admin_servicios.php" method="POST" enctype="multipart/form-data" class="service-admin-item" style="background: #faf8f5; border: 1px solid #e2d9cc; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 12px;">
+                    <form action="admin_servicios.php" method="POST" enctype="multipart/form-data" class="service-admin-item" style="background: #faf8f5; border: 1px solid #e2d9cc; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 12px;">
                         <input type="hidden" name="action" value="actualizar_servicio">
                         <input type="hidden" name="id" value="<?php echo $serv['id']; ?>">
                         <input type="hidden" name="foto_actual" value="<?php echo htmlspecialchars($serv['foto']); ?>">
@@ -119,7 +117,7 @@ try {
                             <input type="number" step="0.01" name="precio" value="<?php echo $serv['precio']; ?>" required style="width: 100%; padding: 8px; border: 1px solid #e2d9cc; border-radius: 6px; background: #fff; box-sizing: border-box;">
                         </div>
 
-                        <!-- Selector de imagen dinámico usando el ID del servicio -->
+                        <!-- Selector de imagen desde la PC -->
                         <div style="display: flex; flex-direction: column; gap: 4px;">
                             <label style="font-size: 0.75rem; font-weight: 500; color: #8c8275;">Cambiar Imagen (Opcional):</label>
                             <input type="file" name="imagen_<?php echo $serv['id']; ?>" accept="image/*" style="width: 100%; padding: 6px; border: 1px solid #e2d9cc; border-radius: 6px; background: #fff; box-sizing: border-box; font-size: 0.8rem;">
