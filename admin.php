@@ -93,8 +93,9 @@ if (isset($_GET['cambiar_estado']) && isset($_GET['id_cita'])) {
             $stmtEstado = $pdo->prepare("UPDATE citas SET estado = 'Confirmada' WHERE id = :id_cita");
             $stmtEstado->execute(['id_cita' => $id_cita]);
         } elseif ($accion === 'rechazar') {
-            $stmtEliminar = $pdo->prepare("DELETE FROM citas WHERE id = :id_cita");
-            $stmtEliminar->execute(['id_cita' => $id_cita]);
+            // Actualizamos a 'Rechazada' en lugar de borrarla
+            $stmtRechazar = $pdo->prepare("UPDATE citas SET estado = 'Rechazada' WHERE id = :id_cita");
+            $stmtRechazar->execute(['id_cita' => $id_cita]);
         }
         header("Location: admin.php");
         exit();
@@ -110,12 +111,9 @@ if (isset($_GET['eliminar_clienta'])) {
     $id_clienta = intval($_GET['eliminar_clienta']);
     
     try {
-        // Opcional pero recomendado: Si la clienta tiene citas asociadas, 
-        // puedes borrarlas primero para evitar errores de clave foránea en la base de datos:
         $stmtDelCitas = $pdo->prepare("DELETE FROM citas WHERE clienta_id = :id_clienta");
         $stmtDelCitas->execute(['id_clienta' => $id_clienta]);
 
-        // Luego eliminamos a la clienta
         $stmtDelClienta = $pdo->prepare("DELETE FROM usuarios WHERE id = :id_clienta AND rol = 'clienta'");
         $stmtDelClienta->execute(['id_clienta' => $id_clienta]);
 
@@ -191,6 +189,7 @@ try {
         }
         .estado-pendiente { background-color: #fff3cd; color: #664d03; border: 1px solid #ffecb5; }
         .estado-confirmada { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+        .estado-rechazada { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
     </style>
 </head>
 <body class="login-body agenda-body-align">
@@ -261,7 +260,15 @@ try {
                                 $i = 1; 
                                 foreach ($citas as $cita): 
                                     $estadoActual = $cita['estado'] ?? 'Pendiente';
-                                    $claseEstado = (strtolower($estadoActual) === 'confirmada') ? 'estado-confirmada' : 'estado-pendiente';
+                                    
+                                    // Determinar clase de estado de forma segura
+                                    if (strtolower($estadoActual) === 'confirmada') {
+                                        $claseEstado = 'estado-confirmada';
+                                    } elseif (strtolower($estadoActual) === 'rechazada') {
+                                        $claseEstado = 'estado-rechazada';
+                                    } else {
+                                        $claseEstado = 'estado-pendiente';
+                                    }
                             ?>
                                 <tr>
                                     <td><?php echo $i++; ?></td>
@@ -277,7 +284,7 @@ try {
                                         <a href="admin.php?cambiar_estado=confirmar&id_cita=<?php echo $cita['id']; ?>" class="btn-accion-aceptar" title="Aceptar cita">
                                             <i class="fa-solid fa-check"></i> Aceptar
                                         </a>
-                                        <a href="admin.php?cambiar_estado=rechazar&id_cita=<?php echo $cita['id']; ?>" class="btn-accion-rechazar" title="Rechazar y liberar horario" onclick="return confirm('¿Estás segura de rechazar este turno? Se eliminará de la base de datos y la hora quedará libre de nuevo.');">
+                                        <a href="admin.php?cambiar_estado=rechazar&id_cita=<?php echo $cita['id']; ?>" class="btn-accion-rechazar" title="Rechazar cita" onclick="return confirm('¿Estás segura de rechazar este turno? Su estado cambiará a rechazada.');">
                                             <i class="fa-solid fa-xmark"></i> Rechazar
                                         </a>
                                     </td>
