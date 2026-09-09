@@ -88,23 +88,26 @@ exit();
 endif; 
 
 // ==========================================
-// PROCESAR CAMBIO DE ESTADO DE CITA (Aceptar / Rechazar)
+// PROCESAR ACCIONES DE CITA (Confirmar o Rechazar/Eliminar)
 // ==========================================
 if (isset($_GET['cambiar_estado']) && isset($_GET['id_cita'])) {
     $id_cita = intval($_GET['id_cita']);
     $accion = $_GET['cambiar_estado'];
     
-    $nuevo_estado = ($accion === 'confirmar') ? 'Confirmada' : (($accion === 'rechazar') ? 'Rechazada' : null);
-
-    if ($nuevo_estado) {
-        try {
-            $stmtEstado = $pdo->prepare("UPDATE citas SET estado = :estado WHERE id = :id_cita");
-            $stmtEstado->execute(['estado' => $nuevo_estado, 'id_cita' => $id_cita]);
-            header("Location: admin.php");
-            exit();
-        } catch (PDOException $e) {
-            $error_db = "Error al actualizar la cita: " . $e->getMessage();
+    try {
+        if ($accion === 'confirmar') {
+            // Cambia el estado a Confirmada
+            $stmtEstado = $pdo->prepare("UPDATE citas SET estado = 'Confirmada' WHERE id = :id_cita");
+            $stmtEstado->execute(['id_cita' => $id_cita]);
+        } elseif ($accion === 'rechazar') {
+            // Elimina la cita por completo para liberar el horario
+            $stmtEliminar = $pdo->prepare("DELETE FROM citas WHERE id = :id_cita");
+            $stmtEliminar->execute(['id_cita' => $id_cita]);
         }
+        header("Location: admin.php");
+        exit();
+    } catch (PDOException $e) {
+        $error_db = "Error al procesar la cita: " . $e->getMessage();
     }
 }
 
@@ -161,7 +164,6 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="admin.css">
     <style>
-        /* Estilos rápidos para los botones de acción en la tabla de citas */
         .btn-accion-aceptar {
             background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;
             padding: 5px 10px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; font-weight: 600; display: inline-block; margin-right: 4px;
@@ -179,7 +181,6 @@ try {
         }
         .estado-pendiente { background-color: #fff3cd; color: #664d03; border: 1px solid #ffecb5; }
         .estado-confirmada { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
-        .estado-rechazada { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
     </style>
 </head>
 <body class="login-body agenda-body-align">
@@ -194,6 +195,8 @@ try {
             <a href="logout.php" class="logout-link">
                 <i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión
             </a>
+            <a href="finanzas.php" class="nav-btn"><i class="fa-solid fa-wallet"></i> Control Financiero</a>
+            
             <a href="Admin_servicios.php" class="btn-luxury" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px;">
                 <i class="fa-solid fa-sliders"></i> Gestionar Precios e Imágenes de Servicios
             </a>
@@ -245,9 +248,7 @@ try {
                                 $i = 1; 
                                 foreach ($citas as $cita): 
                                     $estadoActual = $cita['estado'] ?? 'Pendiente';
-                                    $claseEstado = 'estado-pendiente';
-                                    if (strtolower($estadoActual) === 'confirmada') $claseEstado = 'estado-confirmada';
-                                    if (strtolower($estadoActual) === 'rechazada') $claseEstado = 'estado-rechazada';
+                                    $claseEstado = (strtolower($estadoActual) === 'confirmada') ? 'estado-confirmada' : 'estado-pendiente';
                             ?>
                                 <tr>
                                     <td><?php echo $i++; ?></td>
@@ -260,11 +261,11 @@ try {
                                         </span>
                                     </td>
                                     <td>
-                                        <!-- Botones de Aceptar y Rechazar -->
+                                        <!-- Botones de Aceptar y Rechazar (Eliminar) -->
                                         <a href="admin.php?cambiar_estado=confirmar&id_cita=<?php echo $cita['id']; ?>" class="btn-accion-aceptar" title="Aceptar cita">
                                             <i class="fa-solid fa-check"></i> Aceptar
                                         </a>
-                                        <a href="admin.php?cambiar_estado=rechazar&id_cita=<?php echo $cita['id']; ?>" class="btn-accion-rechazar" title="Rechazar cita" onclick="return confirm('¿Estás segura de rechazar esta cita?');">
+                                        <a href="admin.php?cambiar_estado=rechazar&id_cita=<?php echo $cita['id']; ?>" class="btn-accion-rechazar" title="Rechazar y liberar horario" onclick="return confirm('¿Estás segura de rechazar este turno? Se eliminará de la base de datos y la hora quedará libre de nuevo.');">
                                             <i class="fa-solid fa-xmark"></i> Rechazar
                                         </a>
                                     </td>

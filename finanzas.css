@@ -1,0 +1,109 @@
+/* ==========================================
+   ESTILOS EXCLUSIVOS - MÓDULO FINANCIERO
+   ========================================== */
+
+/* Cuadrícula de tarjetas de resumen superior */
+.finanzas-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+/* Estilo general de las tarjetas financieras */
+.finanza-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--luxury-border, #e5e7eb);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Franja decorativa lateral en cada tarjeta */
+.finanza-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+}
+
+.card-ingresos::after { background-color: #10b981; }
+.card-gastos::after { background-color: #ef4444; }
+.card-ganancia::after { background-color: #d97706; }
+
+/* Títulos y montos dentro de las tarjetas */
+.finanza-card-title {
+    font-size: 0.85rem;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.finanza-card-amount {
+    font-size: 1.6rem;
+    font-weight: 700;
+}
+
+/* Badges o etiquetas de estado para la tabla */
+.badge-ingreso {
+    background-color: #d1e7dd;
+    color: #0f5132;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.badge-gasto {
+    background-color: #f8d7da;
+    color: #842029;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Barra de navegación superior entre paneles */
+.nav-admin-menu {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+    border-bottom: 2px solid #e5e7eb;
+    padding-bottom: 12px;
+    flex-wrap: wrap;
+}
+
+.nav-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    border: 1px solid var(--luxury-border, #e5e7eb);
+    background: #faf7f2;
+    color: #374151;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.nav-btn.active {
+    background: #111;
+    color: #fff;
+    border-color: #111;
+}
+
+.nav-btn:hover {
+    background: #eee;
+}
+
+.nav-btn.active:hover {
+    background: #222;
+}
