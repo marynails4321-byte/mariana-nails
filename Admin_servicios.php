@@ -10,24 +10,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $nuevo_precio = floatval($_POST['precio']);
     $ruta_foto = trim($_POST['foto_actual']); // Mantenemos la foto actual por defecto
 
-    // Verificar si se subió una nueva imagen
-    if (isset($_FILES['nueva_imagen']) && $_FILES['nueva_imagen']['error'] === UPLOAD_ERR_OK) {
-        $nombre_archivo = basename($_FILES['nueva_imagen']['name']);
-        // Limpiar un poco el nombre para evitar espacios o caracteres extraños
+    // Usamos el ID del servicio para apuntar exactamente al input de archivo correspondiente
+    $file_input_name = 'imagen_' . $id_servicio;
+
+    // Verificar si se subió una nueva imagen para este servicio en específico
+    if (isset($_FILES[$file_input_name]) && $_FILES[$file_input_name]['error'] === UPLOAD_ERR_OK) {
+        $nombre_archivo = basename($_FILES[$file_input_name]['name']);
         $nombre_archivo = preg_replace('/[^a-zA-Z0-9_\.-]/', '_', $nombre_archivo);
         $carpeta_destino = 'img/';
         
-        // Asegurar que la carpeta img exista
         if (!is_dir($carpeta_destino)) {
             mkdir($carpeta_destino, 0755, true);
         }
 
-        $ruta_destino = $carpeta_destino . time() . '_' . $nombre_archivo; // Agregamos timestamp para evitar nombres duplicados
+        $ruta_destino = $carpeta_destino . time() . '_' . $id_servicio . '_' . $nombre_archivo;
 
-        if (move_uploaded_file($_FILES['nueva_imagen']['tmp_name'], $ruta_destino)) {
-            $ruta_foto = $ruta_destino; // Actualizamos a la nueva ruta
+        if (move_uploaded_file($_FILES[$file_input_name]['tmp_name'], $ruta_destino)) {
+            $ruta_foto = $ruta_destino;
         } else {
-            $error = "Hubo un error al subir la nueva imagen.";
+            $error = "Hubo un error al subir la imagen para el servicio ID #$id_servicio.";
         }
     }
 
@@ -99,11 +100,9 @@ try {
                 <p style="color: #8c8275; grid-column: 1 / -1; text-align: center;">No hay servicios registrados.</p>
             <?php else: ?>
                 <?php foreach ($servicios_db as $serv): ?>
-                    <!-- Nota: enctype="multipart/form-data" es obligatorio para subir archivos -->
-                    <form action="Admin_servicios.php" method="POST" enctype="multipart/form-data" class="service-admin-item" style="background: #faf8f5; border: 1px solid #e2d9cc; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 12px;">
+                    <form action="admin_servicios.php" method="POST" enctype="multipart/form-data" class="service-admin-item" style="background: #faf8f5; border: 1px solid #e2d9cc; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 12px;">
                         <input type="hidden" name="action" value="actualizar_servicio">
                         <input type="hidden" name="id" value="<?php echo $serv['id']; ?>">
-                        <!-- Guardamos la ruta actual por si no eligen una nueva imagen -->
                         <input type="hidden" name="foto_actual" value="<?php echo htmlspecialchars($serv['foto']); ?>">
 
                         <div style="display: flex; align-items: center; gap: 12px;">
@@ -120,10 +119,10 @@ try {
                             <input type="number" step="0.01" name="precio" value="<?php echo $serv['precio']; ?>" required style="width: 100%; padding: 8px; border: 1px solid #e2d9cc; border-radius: 6px; background: #fff; box-sizing: border-box;">
                         </div>
 
-                        <!-- Seleccionar nueva imagen desde la PC -->
+                        <!-- Selector de imagen dinámico usando el ID del servicio -->
                         <div style="display: flex; flex-direction: column; gap: 4px;">
                             <label style="font-size: 0.75rem; font-weight: 500; color: #8c8275;">Cambiar Imagen (Opcional):</label>
-                            <input type="file" name="nueva_imagen" accept="image/*" style="width: 100%; padding: 6px; border: 1px solid #e2d9cc; border-radius: 6px; background: #fff; box-sizing: border-box; font-size: 0.8rem;">
+                            <input type="file" name="imagen_<?php echo $serv['id']; ?>" accept="image/*" style="width: 100%; padding: 6px; border: 1px solid #e2d9cc; border-radius: 6px; background: #fff; box-sizing: border-box; font-size: 0.8rem;">
                         </div>
 
                         <button type="submit" class="btn-luxury" style="background: linear-gradient(135deg, #d4af37 0%, #b89728 100%); color: white; border: none; border-radius: 6px; padding: 10px; font-weight: 600; font-size: 0.85rem; cursor: pointer; margin-top: 5px;">
