@@ -20,7 +20,7 @@ if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true) {
 }
 
 // ==========================================
-// GESTIÓN DE META FINANCIERA (GUARDAR EN SESIÓN O DB)
+// GESTIÓN DE META FINANCIERA
 // ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'guardar_meta') {
     $nueva_meta = floatval($_POST['meta_monto'] ?? 0);
@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     exit();
 }
 
-$meta_financiera = $_SESSION['meta_financiera'] ?? 50000; // Meta por defecto predeterminada
+$meta_financiera = $_SESSION['meta_financiera'] ?? 50000;
 
 // ==========================================
 // PROCESAR NUEVO MOVIMIENTO FINANCIERO
@@ -79,7 +79,7 @@ if (isset($_GET['eliminar_finanza'])) {
 // ==========================================
 // FILTRO DE MES SELECCIONADO
 // ==========================================
-$mesSeleccionado = $_GET['mes'] ?? date('Y-m'); // Formato: YYYY-MM
+$mesSeleccionado = $_GET['mes'] ?? date('Y-m');
 
 // ==========================================
 // OBTENER DATOS Y CALCULAR TOTALES POR MES
@@ -90,8 +90,8 @@ $ganancia_total = 0;
 $movimientos = [];
 
 try {
-    // Consulta filtrada por año y mes usando LIKE 'YYYY-MM%'
-    $stmtFinanzas = $pdo->prepare("SELECT * FROM finanzas WHERE fecha LIKE :mes ORDER BY fecha DESC, id DESC");
+    // Uso de CAST(fecha AS TEXT) para compatibilidad con bases de datos estrictas como PostgreSQL
+    $stmtFinanzas = $pdo->prepare("SELECT * FROM finanzas WHERE CAST(fecha AS TEXT) LIKE :mes ORDER BY fecha DESC, id DESC");
     $stmtFinanzas->execute(['mes' => $mesSeleccionado . '%']);
     $movimientos = $stmtFinanzas->fetchAll(PDO::FETCH_ASSOC);
 
@@ -108,7 +108,6 @@ try {
     $error_db = "Error al cargar la base de datos: " . $e->getMessage();
 }
 
-// Cálculo del porcentaje de cumplimiento de la meta
 $porcentaje_meta = ($meta_financiera > 0) ? min(round(($ganancia_total / $meta_financiera) * 100, 1), 100) : 0;
 $meta_cumplida = $ganancia_total >= $meta_financiera;
 ?>
@@ -214,7 +213,6 @@ $meta_cumplida = $ganancia_total >= $meta_financiera;
                         <?php endif; ?>
                     </p>
                 </div>
-                <!-- Formulario rápido para cambiar la meta -->
                 <form method="POST" action="finanzas.php" style="display: flex; gap: 5px; align-items: center;">
                     <input type="hidden" name="accion" value="guardar_meta">
                     <input type="hidden" name="mes_actual" value="<?php echo htmlspecialchars($mesSeleccionado); ?>">
@@ -222,7 +220,6 @@ $meta_cumplida = $ganancia_total >= $meta_financiera;
                     <button type="submit" style="background: #374151; color: #fff; border: none; padding: 6px 10px; border-radius: 5px; font-size: 0.8rem; cursor: pointer;">Actualizar Meta</button>
                 </form>
             </div>
-            <!-- Barra de Progreso -->
             <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--luxury-muted);">
                 <span>Progreso: <?php echo $porcentaje_meta; ?>%</span>
                 <span>100% (Meta)</span>
