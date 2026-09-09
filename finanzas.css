@@ -1,5 +1,5 @@
 /* ==========================================
-   ESTILOS EXCLUSIVOS - MÓDULO FINANCIERO
+   ESTILOS COMPLETOS - MÓDULO FINANCIERO
    ========================================== */
 
 /* Cuadrícula de tarjetas de resumen superior */
@@ -106,4 +106,76 @@
 
 .nav-btn.active:hover {
     background: #222;
+}
+
+/* ==========================================
+   FORMULARIO FINANCIERO EN CUADRÍCULA
+   ========================================== */
+.finanza-form-container {
+    background: #faf7f2;
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid var(--luxury-border, #e5e7eb);
+    margin-bottom: 25px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.01);
+}
+
+.finanza-form-grid {
+    display: grid;
+    grid-template-columns: 160px 2fr 1fr 150px auto;
+    gap: 15px;
+    align-items: flex-end;
+}
+
+.finanza-input-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.finanza-input-group label {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+.finanza-input-group input,
+.finanza-input-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--luxury-border, #e5e7eb);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    background: #fff;
+    color: #1f2937;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.finanza-input-group input:focus,
+.finanza-input-group select:focus {
+    outline: none;
+    border-color: #d97706;
+    box-shadow: 0 0 0 3px rgba(217, 119, 6, 0.1);
+}
+
+.btn-guardar-finanza {
+    padding: 11px 20px;
+    font-size: 0.9rem;
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+}
+
+/* Responsivo para pantallas pequeñas y celulares */
+@media (max-width: 900px) {
+    .finanza-form-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+    .finanza-form-grid .btn-guardar-finanza {
+        grid-column: span 2;
+        width: 100%;
+    }
 }

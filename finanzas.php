@@ -146,37 +146,41 @@ try {
             </div>
         </div>
 
-        <!-- FORMULARIO RÁPIDO PARA REGISTRAR -->
-        <div style="background: #faf7f2; padding: 20px; border-radius: 10px; border: 1px solid var(--luxury-border); margin-bottom: 25px;">
-            <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 1rem; color: #374151;"><i class="fa-solid fa-circle-plus"></i> Registrar Nuevo Movimiento</h4>
-            <form action="finanzas.php" method="POST" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+     <!-- FORMULARIO RÁPIDO PARA REGISTRAR -->
+        <div class="finanza-form-container">
+            <h4 style="margin-top: 0; margin-bottom: 18px; font-size: 1.05rem; color: #374151; font-weight: 600;">
+                <i class="fa-solid fa-circle-plus" style="color: #d97706;"></i> Registrar Nuevo Movimiento
+            </h4>
+            <form action="finanzas.php" method="POST" class="finanza-form-grid">
                 <input type="hidden" name="accion" value="registrar_finanza">
                 
-                <div style="flex: 1; min-width: 140px;">
-                    <label style="display: block; font-size: 0.8rem; color: var(--luxury-muted); margin-bottom: 5px;">Tipo</label>
-                    <select name="tipo_movimiento" required style="width: 100%; padding: 9px; border: 1px solid var(--luxury-border); border-radius: 6px; font-size: 0.9rem; background: #fff;">
+                <div class="finanza-input-group">
+                    <label>Tipo</label>
+                    <select name="tipo_movimiento" required>
                         <option value="ingreso">🟢 Ingreso</option>
-                        <option value="gasto">🔴 Gasto</option>
+                        <option value="gasto" selected>🔴 Gasto</option>
                     </select>
                 </div>
 
-                <div style="flex: 2; min-width: 220px;">
-                    <label style="display: block; font-size: 0.8rem; color: var(--luxury-muted); margin-bottom: 5px;">Concepto / Descripción</label>
-                    <input type="text" name="concepto" placeholder="Ej. Compra de acrílico / Servicio de Uñas" required style="width: 100%; padding: 8px; border: 1px solid var(--luxury-border); border-radius: 6px; font-size: 0.9rem;">
+                <div class="finanza-input-group">
+                    <label>Concepto / Descripción</label>
+                    <input type="text" name="concepto" placeholder="Ej. Compra de acrílico" required>
                 </div>
 
-                <div style="flex: 1; min-width: 130px;">
-                    <label style="display: block; font-size: 0.8rem; color: var(--luxury-muted); margin-bottom: 5px;">Monto ($)</label>
-                    <input type="number" step="0.01" name="monto" placeholder="Ej. 15000" required style="width: 100%; padding: 8px; border: 1px solid var(--luxury-border); border-radius: 6px; font-size: 0.9rem;">
+                <div class="finanza-input-group">
+                    <label>Monto ($)</label>
+                    <input type="number" step="0.01" name="monto" placeholder="Ej. 15000" required>
                 </div>
 
-                <div style="flex: 1; min-width: 140px;">
-                    <label style="display: block; font-size: 0.8rem; color: var(--luxury-muted); margin-bottom: 5px;">Fecha</label>
-                    <input type="date" name="fecha_movimiento" value="<?php echo date('Y-m-d'); ?>" required style="width: 100%; padding: 8px; border: 1px solid var(--luxury-border); border-radius: 6px; font-size: 0.9rem;">
+                <div class="finanza-input-group">
+                    <label>Fecha</label>
+                    <input type="date" name="fecha_movimiento" value="<?php echo date('Y-m-d'); ?>" required>
                 </div>
 
                 <div>
-                    <button type="submit" class="btn-luxury" style="padding: 10px 18px; font-size: 0.85rem;"><i class="fa-solid fa-floppy-disk"></i> Guardar</button>
+                    <button type="submit" class="btn-luxury btn-guardar-finanza">
+                        <i class="fa-solid fa-floppy-disk"></i> Guardar
+                    </button>
                 </div>
             </form>
         </div>
