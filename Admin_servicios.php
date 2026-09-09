@@ -26,8 +26,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         } else {
             $error = "Por favor selecciona un archivo de imagen válido.";
         }
-    } elseif (isset($_FILES[$file_input_name]) && $_FILES[$file_input_name]['error'] !== UPLOAD_ERR_NO_FILE) {
-        $error = "Hubo un error al procesar el archivo seleccionado.";
+   } elseif (isset($_FILES[$file_input_name]) && $_FILES[$file_input_name]['error'] !== UPLOAD_ERR_NO_FILE) {
+        // Cambia esta línea temporalmente para ver el código numérico del error:
+        $error = "Error de PHP al subir el archivo. Código de error: " . $_FILES[$file_input_name]['error'];
+    }
     }
 
     if (empty($error)) {
