@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 $stmtInsert = $pdo->prepare("
                     INSERT INTO citas (clienta_id, servicio, foto_ejemplo, fecha_cita, estado) 
-                    VALUES (:clienta_id, :servicio, :foto_ejemplo, :fecha_cita, 'Confirmada')
+                    VALUES (:clienta_id, :servicio, :foto_ejemplo, :fecha_cita, 'Pendiente')
                 ");
                 $stmtInsert->execute(array(
                     'clienta_id' => $clienta_id,
