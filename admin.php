@@ -104,6 +104,29 @@ if (isset($_GET['cambiar_estado']) && isset($_GET['id_cita'])) {
 }
 
 // ==========================================
+// PROCESAR ELIMINAR CLIENTA
+// ==========================================
+if (isset($_GET['eliminar_clienta'])) {
+    $id_clienta = intval($_GET['eliminar_clienta']);
+    
+    try {
+        // Opcional pero recomendado: Si la clienta tiene citas asociadas, 
+        // puedes borrarlas primero para evitar errores de clave foránea en la base de datos:
+        $stmtDelCitas = $pdo->prepare("DELETE FROM citas WHERE clienta_id = :id_clienta");
+        $stmtDelCitas->execute(['id_clienta' => $id_clienta]);
+
+        // Luego eliminamos a la clienta
+        $stmtDelClienta = $pdo->prepare("DELETE FROM usuarios WHERE id = :id_clienta AND rol = 'clienta'");
+        $stmtDelClienta->execute(['id_clienta' => $id_clienta]);
+
+        header("Location: admin.php");
+        exit();
+    } catch (PDOException $e) {
+        $error_db = "Error al eliminar la clienta: " . $e->getMessage();
+    }
+}
+
+// ==========================================
 // PROCESAR NUEVA CLIENTA
 // ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'crear_clienta') {
@@ -299,12 +322,13 @@ try {
                             <th>Nombre Completo</th>
                             <th>Fecha de Nacimiento</th>
                             <th>Registro</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($clientas)): ?>
                             <tr>
-                                <td colspan="4" style="text-align: center; color: var(--luxury-muted); padding: 20px;">No hay clientas registradas todavía.</td>
+                                <td colspan="5" style="text-align: center; color: var(--luxury-muted); padding: 20px;">No hay clientas registradas todavía.</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($clientas as $c): ?>
@@ -313,6 +337,11 @@ try {
                                     <td><strong><?php echo htmlspecialchars($c['nombre']); ?></strong></td>
                                     <td><?php echo htmlspecialchars($c['fnacimiento']); ?></td>
                                     <td><?php echo htmlspecialchars($c['creado_en'] ?? $c['creado_at'] ?? 'Sin fecha'); ?></td>
+                                    <td>
+                                        <a href="admin.php?eliminar_clienta=<?php echo $c['id']; ?>" class="btn-accion-rechazar" title="Eliminar clienta" onclick="return confirm('¿Estás segura de eliminar a esta clienta? Se borrará su registro y sus citas asociadas.');">
+                                            <i class="fa-solid fa-trash"></i> Eliminar
+                                        </a>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
