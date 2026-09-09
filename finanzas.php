@@ -20,6 +20,18 @@ if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true) {
 }
 
 // ==========================================
+// GESTIÓN DE META FINANCIERA (GUARDAR EN SESIÓN O DB)
+// ==========================================
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'guardar_meta') {
+    $nueva_meta = floatval($_POST['meta_monto'] ?? 0);
+    $_SESSION['meta_financiera'] = $nueva_meta;
+    header("Location: finanzas.php?mes=" . ($_POST['mes_actual'] ?? date('Y-m')));
+    exit();
+}
+
+$meta_financiera = $_SESSION['meta_financiera'] ?? 50000; // Meta por defecto predeterminada
+
+// ==========================================
 // PROCESAR NUEVO MOVIMIENTO FINANCIERO
 // ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'registrar_finanza') {
@@ -37,7 +49,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
                 'monto' => $monto,
                 'fecha' => $fecha
             ]);
-            $mensaje_exito = "¡Movimiento financiero registrado con éxito!";
+            $mes_redireccion = date('Y-m', strtotime($fecha));
+            header("Location: finanzas.php?mes=" . $mes_redireccion);
+            exit();
         } catch (PDOException $e) {
             $error_db = "Error al registrar movimiento: " . $e->getMessage();
         }
@@ -51,10 +65,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 // ==========================================
 if (isset($_GET['eliminar_finanza'])) {
     $id_finanza = intval($_GET['eliminar_finanza']);
+    $mes_actual_get = $_GET['mes'] ?? date('Y-m');
     try {
         $stmtDelFinanza = $pdo->prepare("DELETE FROM finanzas WHERE id = :id");
         $stmtDelFinanza->execute(['id' => $id_finanza]);
-        header("Location: finanzas.php");
+        header("Location: finanzas.php?mes=" . $mes_actual_get);
         exit();
     } catch (PDOException $e) {
         $error_db = "Error al eliminar el movimiento.";
@@ -62,7 +77,12 @@ if (isset($_GET['eliminar_finanza'])) {
 }
 
 // ==========================================
-// OBTENER DATOS Y CALCULAR TOTALES
+// FILTRO DE MES SELECCIONADO
+// ==========================================
+$mesSeleccionado = $_GET['mes'] ?? date('Y-m'); // Formato: YYYY-MM
+
+// ==========================================
+// OBTENER DATOS Y CALCULAR TOTALES POR MES
 // ==========================================
 $totalIngresos = 0;
 $totalGastos = 0;
@@ -70,7 +90,9 @@ $ganancia_total = 0;
 $movimientos = [];
 
 try {
-    $stmtFinanzas = $pdo->query("SELECT * FROM finanzas ORDER BY fecha DESC, id DESC");
+    // Consulta filtrada por año y mes usando LIKE 'YYYY-MM%'
+    $stmtFinanzas = $pdo->prepare("SELECT * FROM finanzas WHERE fecha LIKE :mes ORDER BY fecha DESC, id DESC");
+    $stmtFinanzas->execute(['mes' => $mesSeleccionado . '%']);
     $movimientos = $stmtFinanzas->fetchAll(PDO::FETCH_ASSOC);
 
     foreach ($movimientos as $m) {
@@ -85,6 +107,10 @@ try {
 } catch (PDOException $e) {
     $error_db = "Error al cargar la base de datos: " . $e->getMessage();
 }
+
+// Cálculo del porcentaje de cumplimiento de la meta
+$porcentaje_meta = ($meta_financiera > 0) ? min(round(($ganancia_total / $meta_financiera) * 100, 1), 100) : 0;
+$meta_cumplida = $ganancia_total >= $meta_financiera;
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -95,8 +121,22 @@ try {
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="admin.css">
-    <!-- Archivo CSS independiente con control anti-caché -->
     <link rel="stylesheet" href="finanzas.css?v=<?php echo time(); ?>">
+    <style>
+        .filtro-mes-container {
+            background: #fff; border: 1px solid var(--luxury-border); padding: 15px 20px; border-radius: 10px;
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;
+        }
+        .meta-box {
+            background: #faf7f2; border: 1px solid #e6dfd5; padding: 15px 20px; border-radius: 10px; margin-bottom: 20px;
+        }
+        .progress-bar-container {
+            background: #e5e7eb; border-radius: 10px; height: 12px; width: 100%; overflow: hidden; margin-top: 8px; position: relative;
+        }
+        .progress-bar-fill {
+            background: linear-gradient(90deg, #d97706, #10b981); height: 100%; width: 0%; transition: width 0.5s ease;
+        }
+    </style>
 </head>
 <body class="login-body agenda-body-align">
 
@@ -130,23 +170,69 @@ try {
             </div>
         <?php endif; ?>
 
+        <!-- SELECTOR DE MES -->
+        <div class="filtro-mes-container">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <i class="fa-solid fa-calendar-alt" style="color: #d97706; font-size: 1.2rem;"></i>
+                <span style="font-weight: 600; color: #374151;">Seleccionar Mes a Visualizar:</span>
+            </div>
+            <form method="GET" action="finanzas.php" style="display: flex; gap: 10px; align-items: center;">
+                <input type="month" name="mes" value="<?php echo htmlspecialchars($mesSeleccionado); ?>" style="padding: 7px 12px; border: 1px solid var(--luxury-border); border-radius: 6px; font-size: 0.9rem;" required>
+                <button type="submit" class="btn-luxury" style="padding: 8px 15px; font-size: 0.85rem;">Filtrar</button>
+            </form>
+        </div>
+
         <!-- TARJETAS DE RESUMEN SUPERIOR -->
         <div class="finanzas-cards-grid">
             <div class="finanza-card card-ingresos">
-                <div class="finanza-card-title"><i class="fa-solid fa-arrow-trend-up" style="color: #10b981;"></i> Total Ingresos</div>
+                <div class="finanza-card-title"><i class="fa-solid fa-arrow-trend-up" style="color: #10b981;"></i> Ingresos del Mes</div>
                 <div class="finanza-card-amount" style="color: #047857;">$<?php echo number_format($totalIngresos, 2); ?></div>
             </div>
             <div class="finanza-card card-gastos">
-                <div class="finanza-card-title"><i class="fa-solid fa-arrow-trend-down" style="color: #ef4444;"></i> Total Gastos</div>
+                <div class="finanza-card-title"><i class="fa-solid fa-arrow-trend-down" style="color: #ef4444;"></i> Gastos del Mes</div>
                 <div class="finanza-card-amount" style="color: #b91c1c;">$<?php echo number_format($totalGastos, 2); ?></div>
             </div>
             <div class="finanza-card card-ganancia">
-                <div class="finanza-card-title"><i class="fa-solid fa-wallet" style="color: #d97706;"></i> Ganancia Neta Total</div>
+                <div class="finanza-card-title"><i class="fa-solid fa-wallet" style="color: #d97706;"></i> Ganancia Neta</div>
                 <div class="finanza-card-amount" style="color: #b45309;">$<?php echo number_format($ganancia_total, 2); ?></div>
             </div>
         </div>
 
-        <!-- FORMULARIO VERTICAL ORDENADO Y ELEGANTE -->
+        <!-- SECCIÓN DE META FINANCIERA MENSUAL -->
+        <div class="meta-box">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+                <div>
+                    <h4 style="margin: 0; font-size: 1rem; color: #374151;">
+                        <i class="fa-solid fa-bullseye" style="color: #d97706;"></i> Meta de Ganancia Mensual: 
+                        <strong style="color: #b45309;">$<?php echo number_format($meta_financiera, 2); ?></strong>
+                    </h4>
+                    <p style="margin: 3px 0 0 0; font-size: 0.82rem; color: var(--luxury-muted);">
+                        <?php if ($meta_cumplida): ?>
+                            <span style="color: #047857; font-weight: 600;"><i class="fa-solid fa-check-circle"></i> ¡Meta cumplida o superada este mes! 🥳</span>
+                        <?php else: ?>
+                            <span>Te faltan <strong>$<?php echo number_format($meta_financiera - $ganancia_total, 2); ?></strong> para alcanzar la meta.</span>
+                        <?php endif; ?>
+                    </p>
+                </div>
+                <!-- Formulario rápido para cambiar la meta -->
+                <form method="POST" action="finanzas.php" style="display: flex; gap: 5px; align-items: center;">
+                    <input type="hidden" name="accion" value="guardar_meta">
+                    <input type="hidden" name="mes_actual" value="<?php echo htmlspecialchars($mesSeleccionado); ?>">
+                    <input type="number" step="01" name="meta_monto" placeholder="Nueva meta" value="<?php echo $meta_financiera; ?>" style="width: 110px; padding: 5px 8px; border: 1px solid var(--luxury-border); border-radius: 5px; font-size: 0.85rem;" required>
+                    <button type="submit" style="background: #374151; color: #fff; border: none; padding: 6px 10px; border-radius: 5px; font-size: 0.8rem; cursor: pointer;">Actualizar Meta</button>
+                </form>
+            </div>
+            <!-- Barra de Progreso -->
+            <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--luxury-muted);">
+                <span>Progreso: <?php echo $porcentaje_meta; ?>%</span>
+                <span>100% (Meta)</span>
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" style="width: <?php echo $porcentaje_meta; ?>%;"></div>
+            </div>
+        </div>
+
+        <!-- FORMULARIO VERTICAL PARA NUEVO MOVIMIENTO -->
         <div class="finanza-form-container">
             <h4 class="finanza-form-title">
                 <i class="fa-solid fa-circle-plus" style="color: #d97706;"></i> Registrar Nuevo Movimiento
@@ -155,7 +241,6 @@ try {
             <form action="finanzas.php" method="POST" class="finanza-form">
                 <input type="hidden" name="accion" value="registrar_finanza">
                 
-                <!-- Fila 1: Tipo y Fecha -->
                 <div class="form-row-grid">
                     <div class="finanza-input-group">
                         <label>Tipo de Movimiento</label>
@@ -171,11 +256,10 @@ try {
                     </div>
                 </div>
 
-                <!-- Fila 2: Concepto y Monto -->
                 <div class="form-row-grid-wide">
                     <div class="finanza-input-group">
                         <label>Concepto / Descripción</label>
-                        <input type="text" name="concepto" placeholder="Ej. Compra de acrílico o Servicio" required>
+                        <input type="text" name="concepto" placeholder="Ej. Compra de acrílico o Servicio de Uñas" required>
                     </div>
 
                     <div class="finanza-input-group">
@@ -184,7 +268,6 @@ try {
                     </div>
                 </div>
 
-                <!-- Fila 3: Botón de Ancho Completo -->
                 <div style="margin-top: 5px;">
                     <button type="submit" class="btn-luxury btn-guardar-finanza">
                         <i class="fa-solid fa-floppy-disk"></i> Guardar Movimiento Financiero
@@ -208,7 +291,7 @@ try {
                 <tbody>
                     <?php if (empty($movimientos)): ?>
                         <tr>
-                            <td colspan="5" style="text-align: center; color: var(--luxury-muted); padding: 20px;">No hay movimientos financieros registrados todavía.</td>
+                            <td colspan="5" style="text-align: center; color: var(--luxury-muted); padding: 20px;">No hay movimientos registrados en el mes de <strong><?php echo htmlspecialchars($mesSeleccionado); ?></strong>.</td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($movimientos as $m): ?>
@@ -226,7 +309,7 @@ try {
                                     <?php echo ($m['tipo'] === 'ingreso' ? '+' : '-'); ?>$<?php echo number_format($m['monto'], 2); ?>
                                 </td>
                                 <td>
-                                    <a href="finanzas.php?eliminar_finanza=<?php echo $m['id']; ?>" onclick="return confirm('¿Estás segura de eliminar este registro?');" style="color: #ef4444; text-decoration: none; font-size: 0.85rem;" title="Eliminar">
+                                    <a href="finanzas.php?eliminar_finanza=<?php echo $m['id']; ?>&mes=<?php echo $mesSeleccionado; ?>" onclick="return confirm('¿Estás segura de eliminar este registro?');" style="color: #ef4444; text-decoration: none; font-size: 0.85rem;" title="Eliminar">
                                         <i class="fa-solid fa-trash-can"></i>
                                     </a>
                                 </td>
