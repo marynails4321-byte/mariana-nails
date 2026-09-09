@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $cita_existente = $stmtCheck->fetch();
 
             if ($cita_existente) {
-                $error = "Lo sentimos, este horario no está disponible. Debe haber un espacio mínimo de 3 horas entre cada turno.";
+                $error = "Gracias por tu interes pero esta hora ya se encuentra agendada. Lo sentimos, debe haber un espacio mínimo de 3 horas entre cada turno.";
             } else {
                 $stmtInsert = $pdo->prepare("
                     INSERT INTO citas (clienta_id, servicio, foto_ejemplo, fecha_cita, estado) 
@@ -131,6 +131,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <i class="fa-regular fa-clock"></i>
                     <select id="hora" name="hora" required>
                         <option value="">Selecciona una hora...</option>
+                        <option value="08:00">08:00 AM</option>
                         <option value="09:00">09:00 AM</option>
                         <option value="10:00">10:00 AM</option>
                         <option value="11:00">11:00 AM</option>
@@ -141,7 +142,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <option value="16:00">04:00 PM</option>
                         <option value="17:00">05:00 PM</option>
                         <option value="18:00">06:00 PM</option>
-                        <option value="19:00">07:00 PM</option>
                     </select>
                 </div>
             </div>
