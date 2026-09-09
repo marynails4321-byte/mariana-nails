@@ -98,7 +98,7 @@ try {
                 <p style="color: #8c8275; grid-column: 1 / -1; text-align: center;">No hay servicios registrados.</p>
             <?php else: ?>
                 <?php foreach ($servicios_db as $serv): ?>
-                    <form action="admin_servicios.php" method="POST" enctype="multipart/form-data" class="service-admin-item" style="background: #faf8f5; border: 1px solid #e2d9cc; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 12px;">
+                    <form action="Admin_servicios.php" method="POST" enctype="multipart/form-data" class="service-admin-item" style="background: #faf8f5; border: 1px solid #e2d9cc; border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 12px;">
                         <input type="hidden" name="action" value="actualizar_servicio">
                         <input type="hidden" name="id" value="<?php echo $serv['id']; ?>">
                         <input type="hidden" name="foto_actual" value="<?php echo htmlspecialchars($serv['foto']); ?>">
