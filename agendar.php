@@ -31,10 +31,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $fecha_hora_cita = $fecha_seleccionada . ' ' . $hora_seleccionada . ':00';
         
-        try {
+       try {
             $stmtCheck = $pdo->prepare("
                 SELECT fecha_cita FROM citas 
-                WHERE ABS(EXTRACT(EPOCH FROM (fecha_cita - TIMESTAMP :nueva_cita))) < 10800
+                WHERE ABS(EXTRACT(EPOCH FROM (fecha_cita - :nueva_cita::timestamp))) < 10800
             ");
             $stmtCheck->execute(array('nueva_cita' => $fecha_hora_cita));
             $cita_existente = $stmtCheck->fetch();
