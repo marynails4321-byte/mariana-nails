@@ -17,7 +17,7 @@ if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true) {
 // ==========================================
 // PROCESAR EL INICIO DE SESIÓN
 // ==========================================
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password']) && !isset($_POST['accion'])) {
     $password_ingresada = trim($_POST['password'] ?? '');
     $password_correcta = '4321Mary';
 
@@ -88,6 +88,27 @@ exit();
 endif; 
 
 // ==========================================
+// PROCESAR CAMBIO DE ESTADO DE CITA (Aceptar / Rechazar)
+// ==========================================
+if (isset($_GET['cambiar_estado']) && isset($_GET['id_cita'])) {
+    $id_cita = intval($_GET['id_cita']);
+    $accion = $_GET['cambiar_estado'];
+    
+    $nuevo_estado = ($accion === 'confirmar') ? 'Confirmada' : (($accion === 'rechazar') ? 'Rechazada' : null);
+
+    if ($nuevo_estado) {
+        try {
+            $stmtEstado = $pdo->prepare("UPDATE citas SET estado = :estado WHERE id = :id_cita");
+            $stmtEstado->execute(['estado' => $nuevo_estado, 'id_cita' => $id_cita]);
+            header("Location: admin.php");
+            exit();
+        } catch (PDOException $e) {
+            $error_db = "Error al actualizar la cita: " . $e->getMessage();
+        }
+    }
+}
+
+// ==========================================
 // PROCESAR NUEVA CLIENTA DESDE EL PANEL ADMIN
 // ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'crear_clienta') {
@@ -139,6 +160,27 @@ try {
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="admin.css">
+    <style>
+        /* Estilos rápidos para los botones de acción en la tabla de citas */
+        .btn-accion-aceptar {
+            background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;
+            padding: 5px 10px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; font-weight: 600; display: inline-block; margin-right: 4px;
+        }
+        .btn-accion-aceptar:hover { background-color: #badbcc; }
+
+        .btn-accion-rechazar {
+            background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7;
+            padding: 5px 10px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; font-weight: 600; display: inline-block;
+        }
+        .btn-accion-rechazar:hover { background-color: #f5c2c7; }
+
+        .badge-estado {
+            padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; display: inline-block;
+        }
+        .estado-pendiente { background-color: #fff3cd; color: #664d03; border: 1px solid #ffecb5; }
+        .estado-confirmada { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+        .estado-rechazada { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+    </style>
 </head>
 <body class="login-body agenda-body-align">
 
@@ -153,8 +195,8 @@ try {
                 <i class="fa-solid fa-arrow-right-from-bracket"></i> Cerrar Sesión
             </a>
             <a href="Admin_servicios.php" class="btn-luxury" style="text-decoration: none; display: inline-flex; align-items: center; gap: 8px; margin-bottom: 20px;">
-    <i class="fa-solid fa-sliders"></i> Gestionar Precios e Imágenes de Servicios
-</a>
+                <i class="fa-solid fa-sliders"></i> Gestionar Precios e Imágenes de Servicios
+            </a>
         </div>
 
         <?php if (!empty($error_db)): ?>
@@ -178,7 +220,7 @@ try {
         <div id="citas-section" class="tab-content active">
             <div class="section-flex-header">
                 <h3 class="section-title">Próximos Turnos Agendados</h3>
-                <span class="section-hint">Vista general de la agenda</span>
+                <span class="section-hint">Gestiona el estado de las citas</span>
             </div>
 
             <div class="table-responsive">
@@ -190,21 +232,42 @@ try {
                             <th>Servicio Solicitado</th>
                             <th>Fecha y Hora</th>
                             <th>Estado</th>
+                            <th>Acciones</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($citas)): ?>
                             <tr>
-                                <td colspan="5" style="text-align: center; color: var(--luxury-muted); padding: 20px;">No hay citas agendadas todavía.</td>
+                                <td colspan="6" style="text-align: center; color: var(--luxury-muted); padding: 20px;">No hay citas agendadas todavía.</td>
                             </tr>
                         <?php else: ?>
-                            <?php $i = 1; foreach ($citas as $cita): ?>
+                            <?php 
+                                $i = 1; 
+                                foreach ($citas as $cita): 
+                                    $estadoActual = $cita['estado'] ?? 'Pendiente';
+                                    $claseEstado = 'estado-pendiente';
+                                    if (strtolower($estadoActual) === 'confirmada') $claseEstado = 'estado-confirmada';
+                                    if (strtolower($estadoActual) === 'rechazada') $claseEstado = 'estado-rechazada';
+                            ?>
                                 <tr>
                                     <td><?php echo $i++; ?></td>
                                     <td><strong><?php echo htmlspecialchars($cita['nombre_clienta']); ?></strong></td>
                                     <td><?php echo htmlspecialchars($cita['servicio']); ?></td>
                                     <td><?php echo htmlspecialchars($cita['fecha_cita']); ?></td>
-                                    <td><span class="badge-status"><?php echo htmlspecialchars($cita['estado']); ?></span></td>
+                                    <td>
+                                        <span class="badge-estado <?php echo $claseEstado; ?>">
+                                            <?php echo htmlspecialchars($estadoActual); ?>
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <!-- Botones de Aceptar y Rechazar -->
+                                        <a href="admin.php?cambiar_estado=confirmar&id_cita=<?php echo $cita['id']; ?>" class="btn-accion-aceptar" title="Aceptar cita">
+                                            <i class="fa-solid fa-check"></i> Aceptar
+                                        </a>
+                                        <a href="admin.php?cambiar_estado=rechazar&id_cita=<?php echo $cita['id']; ?>" class="btn-accion-rechazar" title="Rechazar cita" onclick="return confirm('¿Estás segura de rechazar esta cita?');">
+                                            <i class="fa-solid fa-xmark"></i> Rechazar
+                                        </a>
+                                    </td>
                                 </tr>
                             <?php endforeach; ?>
                         <?php endif; ?>
