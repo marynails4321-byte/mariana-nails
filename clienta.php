@@ -56,17 +56,32 @@ $nombre_clienta = $_SESSION['nombre_clienta'];
 $clienta_id = $_SESSION['clienta_id'] ?? null;
 
 // ==========================================
-// CARGAR LAS CITAS DE LA CLIENTA (Ocultando rechazadas después de 24h)
+// PROCESAR ELIMINAR CITA (POR PARTE DE LA CLIENTA)
+// ==========================================
+if (isset($_GET['eliminar_cita']) && $clienta_id) {
+    $id_cita_eliminar = intval($_GET['eliminar_cita']);
+
+    try {
+        $stmtDel = $pdo->prepare("DELETE FROM citas WHERE id = :id_cita AND clienta_id = :clienta_id");
+        $stmtDel->execute([
+            'id_cita' => $id_cita_eliminar,
+            'clienta_id' => $clienta_id
+        ]);
+        header("Location: clienta.php");
+        exit();
+    } catch (PDOException $e) {
+        $error_db = "Error al eliminar la cita: " . $e->getMessage();
+    }
+}
+
+// ==========================================
+// CARGAR LAS CITAS DE LA CLIENTA
 // ==========================================
 try {
     if ($clienta_id) {
         $stmtCitasClienta = $pdo->prepare("
             SELECT * FROM citas 
             WHERE clienta_id = :clienta_id 
-            AND (
-                estado != 'Rechazada' 
-                OR (estado = 'Rechazada' AND rechazada_en >= NOW() - INTERVAL '24 HOURS')
-            )
             ORDER BY fecha_cita DESC
         ");
         $stmtCitasClienta->execute(['clienta_id' => $clienta_id]);
@@ -125,7 +140,9 @@ try {
             <?php else: ?>
                 <!-- Listado real de citas de la clienta -->
                 <div style="display: flex; flex-direction: column; gap: 12px;">
-                    <?php foreach ($citas_clienta as $cita): ?>
+                    <?php foreach ($citas_clienta as $cita): 
+                        $estadoCita = $cita['estado'] ?? 'Pendiente';
+                    ?>
                         <div style="background: #ffffff; padding: 15px 20px; border-radius: 8px; border: 1px solid var(--luxury-border); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                             <div>
                                 <span style="display: block; font-size: 0.8rem; color: var(--luxury-muted);">Servicio</span>
@@ -135,8 +152,15 @@ try {
                                 <span style="display: block; font-size: 0.8rem; color: var(--luxury-muted);">Fecha y Hora</span>
                                 <strong style="color: var(--luxury-dark); font-size: 1rem;"><?php echo htmlspecialchars($cita['fecha_cita']); ?></strong>
                             </div>
-                            <div>
-                                <span class="badge-status"><?php echo htmlspecialchars($cita['estado']); ?></span>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <span class="badge-status"><?php echo htmlspecialchars($estadoCita); ?></span>
+                                
+                                <!-- Botón para que la clienta borre su cita rechazada (o cualquier cita si lo desea) -->
+                                <?php if (strtolower($estadoCita) === 'rechazada'): ?>
+                                    <a href="clienta.php?eliminar_cita=<?php echo $cita['id']; ?>" style="background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; padding: 5px 8px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;" onclick="return confirm('¿Deseas quitar esta cita rechazada de tu historial?');" title="Quitar de mi pantalla">
+                                        <i class="fa-solid fa-xmark"></i> Quitar
+                                    </a>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>
