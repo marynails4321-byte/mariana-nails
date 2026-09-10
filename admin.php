@@ -93,7 +93,6 @@ if (isset($_GET['cambiar_estado']) && isset($_GET['id_cita'])) {
             $stmtEstado = $pdo->prepare("UPDATE citas SET estado = 'Confirmada' WHERE id = :id_cita");
             $stmtEstado->execute(['id_cita' => $id_cita]);
         } elseif ($accion === 'rechazar') {
-            // Al rechazar, actualizamos el estado y guardamos la fecha/hora exacta en rechazada_en
             $stmtRechazar = $pdo->prepare("UPDATE citas SET estado = 'Rechazada', rechazada_en = NOW() WHERE id = :id_cita");
             $stmtRechazar->execute(['id_cita' => $id_cita]);
         }
@@ -161,13 +160,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 }
 
 // ==========================================
-// OBTENER DATOS (Excluyendo las citas rechazadas para el admin)
+// OBTENER DATOS (Excluyendo las citas rechazadas)
 // ==========================================
 try {
     $stmtClientas = $pdo->query("SELECT * FROM usuarios WHERE rol = 'clienta' ORDER BY id DESC");
     $clientas = $stmtClientas->fetchAll(PDO::FETCH_ASSOC);
 
-    // Se agrega c.estado != 'Rechazada' para que desaparezcan inmediatamente al admin
     $stmtCitas = $pdo->query("
         SELECT c.*, u.nombre as nombre_clienta 
         FROM citas c 
