@@ -135,7 +135,7 @@ try {
     $stmtClientas = $pdo->query("SELECT * FROM usuarios WHERE rol = 'clienta' ORDER BY id DESC");
     $clientas = $stmtClientas->fetchAll(PDO::FETCH_ASSOC);
 
-    // CONSULTA ACTUALIZADA CON JOIN A LA TABLA SERVICIOS
+    // Consulta con JOIN intentando traer el precio de la tabla servicios
     $stmtCitas = $pdo->query("
         SELECT c.*, u.nombre as nombre_clienta, s.nombre as nombre_servicio, s.precio as precio_servicio 
         FROM citas c 
@@ -145,6 +145,14 @@ try {
         ORDER BY c.fecha_cita DESC
     ");
     $citas = $stmtCitas->fetchAll(PDO::FETCH_ASSOC);
+
+    // Diccionario de respaldo por si el servicio_id de la cita no está vinculado en la base de datos
+    $stmtPreciosFijos = $pdo->query("SELECT nombre, precio FROM servicios");
+    $precios_catalogo = [];
+    while($row = $stmtPreciosFijos->fetch(PDO::FETCH_ASSOC)) {
+        $precios_catalogo[strtolower(trim($row['nombre']))] = floatval($row['precio']);
+    }
+
 } catch (PDOException $e) {
     $error_db = "Error al cargar la base de datos: " . $e->getMessage();
 }
@@ -232,13 +240,20 @@ try {
                                     $estadoActual = $cita['estado'] ?? 'Pendiente';
                                     $claseEstado = (strtolower($estadoActual) === 'confirmada') ? 'estado-confirmada' : 'estado-pendiente';
                                     
-                                    // Cambiado para usar el precio que viene de la tabla servicios
+                                    // Obtenemos el nombre del servicio
+                                    $nombreServicioMostrar = $cita['nombre_servicio'] ?? ($cita['servicio'] ?? 'Servicio');
+                                    
+                                    // Determinamos el precio: 1) Del JOIN, 2) Del respaldo por nombre, 3) 0
                                     $precioBase = floatval($cita['precio_servicio'] ?? 0);
+                                    if ($precioBase <= 0) {
+                                        $nombreKey = strtolower(trim($nombreServicioMostrar));
+                                        if (isset($precios_catalogo[$nombreKey])) {
+                                            $precioBase = $precios_catalogo[$nombreKey];
+                                        }
+                                    }
+
                                     $adicionalVal = floatval($cita['adicional'] ?? 0);
                                     $totalCita = $precioBase + $adicionalVal;
-
-                                    // Muestra el nombre del servicio de la tabla servicios o por defecto lo que tenga guardado la cita
-                                    $nombreServicioMostrar = $cita['nombre_servicio'] ?? ($cita['servicio'] ?? 'Servicio');
                             ?>
                                 <tr>
                                     <td><?php echo $i++; ?></td>
