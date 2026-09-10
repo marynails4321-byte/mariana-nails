@@ -31,8 +31,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $fecha_hora_cita = $fecha_seleccionada . ' ' . $hora_seleccionada . ':00';
         
-       try {
-            // CORREGIDO: Se agregó AND estado != 'Rechazada' para liberar el horario si la admin lo rechazó
+        try {
+            // 1. Buscar el precio exacto del servicio seleccionado en la base de datos
+            $stmtPrecio = $pdo->prepare("SELECT precio FROM servicios WHERE nombre = :nombre LIMIT 1");
+            $stmtPrecio->execute(['nombre' => $servicio]);
+            $datosServicio = $stmtPrecio->fetch(PDO::FETCH_ASSOC);
+            $precio_servicio = $datosServicio ? floatval($datosServicio['precio']) : 0.00;
+
+            // 2. Validar el margen de 3 horas (excluyendo rechazadas)
             $stmtCheck = $pdo->prepare("
                 SELECT fecha_cita FROM citas 
                 WHERE estado != 'Rechazada' 
@@ -44,18 +50,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($cita_existente) {
                 $error = "Gracias por tu interes pero esta hora ya se encuentra agendada. Lo sentimos, debe haber un espacio mínimo de 3 horas entre cada turno.";
             } else {
+                // 3. Insertar la cita guardando también el precio base
                 $stmtInsert = $pdo->prepare("
-                    INSERT INTO citas (clienta_id, servicio, foto_ejemplo, fecha_cita, estado) 
-                    VALUES (:clienta_id, :servicio, :foto_ejemplo, :fecha_cita, 'Pendiente')
+                    INSERT INTO citas (clienta_id, servicio, precio, foto_ejemplo, fecha_cita, estado) 
+                    VALUES (:clienta_id, :servicio, :precio, :foto_ejemplo, :fecha_cita, 'Pendiente')
                 ");
                 $stmtInsert->execute(array(
                     'clienta_id' => $clienta_id,
                     'servicio' => $servicio,
+                    'precio' => $precio_servicio,
                     'foto_ejemplo' => $foto_ejemplo,
                     'fecha_cita' => $fecha_hora_cita
                 ));
                 
                 $exito = "¡Tu cita ha sido agendada con éxito!";
+
+                // --- NOTIFICACIÓN AUTOMÁTICA A WHATSAPP (CALLMEBOT) ---
+                $telefono_admin = "+573001234567"; // Reemplaza con tu número y código de país
+                $apikey_admin = "TU_API_KEY";      // Tu clave de CallMeBot
+
+                $mensaje_whatsapp = "✨ *¡Nueva cita pendiente!* ✨%0A%0A" .
+                                    "Clienta: " . urlencode($nombre_clienta) . "%0A" .
+                                    "Servicio: " . urlencode($servicio) . " ($" . number_format($precio_servicio, 0, ',', '.') . ")%0A" .
+                                    "Fecha y Hora: " . urlencode($fecha_hora_cita) . "%0A%0A" .
+                                    "Ingresa al panel para aprobarla o rechazarla.";
+
+                $url_api = "https://api.callmebot.com/whatsapp.php?phone=" . $telefono_admin . 
+                           "&text=" . $mensaje_whatsapp . 
+                           "&apikey=" . $apikey_admin;
+
+                @file_get_contents($url_api);
             }
         } catch (PDOException $e) {
             $error = "Error en el sistema al procesar la cita: " . $e->getMessage();
@@ -75,7 +99,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body class="login-body" style="display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; padding: 20px;">
     <div class="agenda-container">
-        
         <div class="agenda-header">
             <div>
                 <h2 class="agenda-title">Reserva tu Turno ✨</h2>
@@ -87,24 +110,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <?php if (!empty($error)): ?>
-            <div class="alert-error">
-                <i class="fa-solid fa-triangle-exclamation"></i> <?php echo htmlspecialchars($error); ?>
-            </div>
+            <div class="alert-error"><i class="fa-solid fa-triangle-exclamation"></i> <?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
 
         <?php if (!empty($exito)): ?>
-            <div class="alert-success">
-                <i class="fa-solid fa-circle-check"></i> <?php echo htmlspecialchars($exito); ?>
-            </div>
+            <div class="alert-success"><i class="fa-solid fa-circle-check"></i> <?php echo htmlspecialchars($exito); ?></div>
         <?php endif; ?>
 
         <form action="agendar.php" method="POST">
-            
             <label class="form-label-luxury">1. Selecciona el servicio que deseas:</label>
             <div class="services-grid">
-                
                 <?php if (empty($servicios_db)): ?>
-                    <p style="color: var(--luxury-muted); grid-column: 1 / -1; text-align: center;">No hay servicios disponibles en este momento.</p>
+                    <p style="color: var(--luxury-muted); grid-column: 1 / -1; text-align: center;">No hay servicios disponibles.</p>
                 <?php else: ?>
                     <?php foreach ($servicios_db as $serv): ?>
                         <label class="service-card" onclick="selectService(this)">
@@ -116,7 +133,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </label>
                     <?php endforeach; ?>
                 <?php endif; ?>
-
             </div>
 
             <div class="form-group-luxury">
@@ -149,15 +165,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <button type="submit" class="btn-luxury">Confirmar y Reservar Cita</button>
-
         </form>
     </div>
-
     <script>
         function selectService(cardElement) {
-            document.querySelectorAll('.service-card').forEach(card => {
-                card.classList.remove('selected');
-            });
+            document.querySelectorAll('.service-card').forEach(card => card.classList.remove('selected'));
             cardElement.classList.add('selected');
             cardElement.querySelector('input[type="radio"]').checked = true;
         }

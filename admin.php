@@ -6,18 +6,12 @@ $error = '';
 $mensaje_exito = '';
 $error_db = '';
 
-// ==========================================
-// VERIFICAR COOKIE PERSISTENTE DE ADMINISTRADOR
-// ==========================================
 if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true) {
     if (isset($_COOKIE['cookie_admin_logged']) && $_COOKIE['cookie_admin_logged'] === 'true') {
         $_SESSION['admin_logged'] = true;
     }
 }
 
-// ==========================================
-// PROCESAR EL INICIO DE SESIÓN
-// ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password']) && !isset($_POST['accion'])) {
     $password_ingresada = trim($_POST['password'] ?? '');
     $password_correcta = '4321Mary';
@@ -32,7 +26,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password']) && !isset
     }
 }
 
-// Si el administrador NO ha iniciado sesión, mostrar login
 if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true):
 ?>
 <!DOCTYPE html>
@@ -51,13 +44,9 @@ if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true):
             <img src="Logo.png" alt="Mariana Nails Studio" class="brand-logo">
         </div>
         <p class="login-subtitle">Acceso Exclusivo - Administración</p>
-
         <?php if (!empty($error)): ?>
-            <div style="background-color: #fdf2f2; border: 1px solid #f8d7da; color: #a94442; padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 15px; text-align: center;">
-                <?php echo $error; ?>
-            </div>
+            <div style="background-color: #fdf2f2; border: 1px solid #f8d7da; color: #a94442; padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 15px; text-align: center;"><?php echo $error; ?></div>
         <?php endif; ?>
-
         <form action="admin.php" method="POST">
             <div class="form-group-luxury">
                 <label for="password">Contraseña</label>
@@ -68,10 +57,9 @@ if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true):
             </div>
             <button type="submit" class="btn-luxury">Ingresar al Panel</button>
         </form>
-
         <div style="text-align: center; margin-top: 20px;">
             <a href="index.php" style="color: var(--luxury-muted); text-decoration: none; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 5px;">
-                <i class="fa-solid fa-arrow-left"></i> Volver al inicio de clientas
+                <i class="fa-solid fa-arrow-left"></i> Volver al inicio
             </a>
         </div>
     </div>
@@ -81,13 +69,9 @@ if (!isset($_SESSION['admin_logged']) || $_SESSION['admin_logged'] !== true):
 exit();
 endif; 
 
-// ==========================================
-// PROCESAR ACCIONES DE CITA (ESTADO Y ADICIONAL)
-// ==========================================
 if (isset($_GET['cambiar_estado']) && isset($_GET['id_cita'])) {
     $id_cita = intval($_GET['id_cita']);
     $accion = $_GET['cambiar_estado'];
-    
     try {
         if ($accion === 'confirmar') {
             $stmtEstado = $pdo->prepare("UPDATE citas SET estado = 'Confirmada' WHERE id = :id_cita");
@@ -103,11 +87,9 @@ if (isset($_GET['cambiar_estado']) && isset($_GET['id_cita'])) {
     }
 }
 
-// Guardar valor adicional
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'guardar_adicional') {
     $id_cita = intval($_POST['id_cita'] ?? 0);
     $adicional = floatval($_POST['adicional'] ?? 0);
-
     if ($id_cita > 0) {
         try {
             $stmtAdicional = $pdo->prepare("UPDATE citas SET adicional = :adicional WHERE id = :id_cita");
@@ -119,19 +101,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     }
 }
 
-// ==========================================
-// PROCESAR ELIMINAR CLIENTA
-// ==========================================
 if (isset($_GET['eliminar_clienta'])) {
     $id_clienta = intval($_GET['eliminar_clienta']);
-    
     try {
         $stmtDelCitas = $pdo->prepare("DELETE FROM citas WHERE clienta_id = :id_clienta");
         $stmtDelCitas->execute(['id_clienta' => $id_clienta]);
-
         $stmtDelClienta = $pdo->prepare("DELETE FROM usuarios WHERE id = :id_clienta AND rol = 'clienta'");
         $stmtDelClienta->execute(['id_clienta' => $id_clienta]);
-
         header("Location: admin.php");
         exit();
     } catch (PDOException $e) {
@@ -139,13 +115,9 @@ if (isset($_GET['eliminar_clienta'])) {
     }
 }
 
-// ==========================================
-// PROCESAR NUEVA CLIENTA
-// ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'crear_clienta') {
     $nuevo_nombre = trim($_POST['nuevo_nombre'] ?? '');
     $nueva_fnac = trim($_POST['nueva_fnac'] ?? '');
-
     if (!empty($nuevo_nombre) && !empty($nueva_fnac)) {
         try {
             $stmtInsert = $pdo->prepare("INSERT INTO usuarios (nombre, fnacimiento, rol) VALUES (:nombre, :fnac, 'clienta')");
@@ -155,13 +127,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
             $error_db = "Error al registrar la clienta: " . $e->getMessage();
         }
     } else {
-        $error_db = "Por favor completa todos los campos para registrar a la clienta.";
+        $error_db = "Por favor completa todos los campos.";
     }
 }
 
-// ==========================================
-// OBTENER DATOS (Excluyendo las citas rechazadas)
-// ==========================================
 try {
     $stmtClientas = $pdo->query("SELECT * FROM usuarios WHERE rol = 'clienta' ORDER BY id DESC");
     $clientas = $stmtClientas->fetchAll(PDO::FETCH_ASSOC);
@@ -188,30 +157,17 @@ try {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="admin.css">
     <style>
-        .btn-accion-aceptar {
-            background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc;
-            padding: 5px 10px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; font-weight: 600; display: inline-block; margin-right: 4px;
-        }
+        .btn-accion-aceptar { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; padding: 5px 10px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; font-weight: 600; display: inline-block; margin-right: 4px; }
         .btn-accion-aceptar:hover { background-color: #badbcc; }
-
-        .btn-accion-rechazar {
-            background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7;
-            padding: 5px 10px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; font-weight: 600; display: inline-block;
-        }
+        .btn-accion-rechazar { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; padding: 5px 10px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; font-weight: 600; display: inline-block; }
         .btn-accion-rechazar:hover { background-color: #f5c2c7; }
-
-        .badge-estado {
-            padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; display: inline-block;
-        }
+        .badge-estado { padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; display: inline-block; }
         .estado-pendiente { background-color: #fff3cd; color: #664d03; border: 1px solid #ffecb5; }
         .estado-confirmada { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
     </style>
 </head>
 <body class="login-body agenda-body-align">
-
     <div class="agenda-container" style="max-width: 1100px; width: 100%;">
-        
-        <!-- ENCABEZADO PRINCIPAL -->
         <div class="agenda-header">
             <div>
                 <h2 class="agenda-title">Agenda & Directorio 👑</h2>
@@ -222,7 +178,6 @@ try {
             </a>
         </div>
 
-        <!-- MENÚ DE NAVEGACIÓN UNIFICADO -->
         <div class="nav-admin-menu">
             <a href="admin.php" class="nav-btn active"><i class="fa-solid fa-calendar-days"></i> Agenda y Clientas</a>
             <a href="Admin_servicios.php" class="nav-btn"><i class="fa-solid fa-sliders"></i> Gestionar Servicios</a>
@@ -230,15 +185,11 @@ try {
         </div>
 
         <?php if (!empty($error_db)): ?>
-            <div style="background-color: #fdf2f2; border: 1px solid #f8d7da; color: #a94442; padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 15px;">
-                <?php echo htmlspecialchars($error_db); ?>
-            </div>
+            <div style="background-color: #fdf2f2; border: 1px solid #f8d7da; color: #a94442; padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 15px;"><?php echo htmlspecialchars($error_db); ?></div>
         <?php endif; ?>
 
         <?php if (!empty($mensaje_exito)): ?>
-            <div style="background-color: #e2fef0; border: 1px solid #b7ebcc; color: #0f5132; padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 15px;">
-                <?php echo htmlspecialchars($mensaje_exito); ?>
-            </div>
+            <div style="background-color: #e2fef0; border: 1px solid #b7ebcc; color: #0f5132; padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 15px;"><?php echo htmlspecialchars($mensaje_exito); ?></div>
         <?php endif; ?>
 
         <div class="agenda-tabs">
@@ -246,11 +197,10 @@ try {
             <button class="tab-btn" onclick="switchTab(event, 'clientas-section')"><i class="fa-solid fa-users"></i> Directorio de Clientas</button>
         </div>
 
-        <!-- SECCIÓN 1: AGENDA DE CITAS -->
         <div id="citas-section" class="tab-content active">
             <div class="section-flex-header">
                 <h3 class="section-title">Próximos Turnos Agendados</h3>
-                <span class="section-hint">Gestiona estados y valores adicionales</span>
+                <span class="section-hint">Gestiona estados, precios y valores adicionales</span>
             </div>
 
             <div class="table-responsive">
@@ -260,7 +210,9 @@ try {
                             <th>#</th>
                             <th>Clienta</th>
                             <th>Servicio Solicitado</th>
+                            <th>Precio Servicio</th>
                             <th>Adicional ($)</th>
+                            <th>Total ($)</th>
                             <th>Fecha y Hora</th>
                             <th>Estado</th>
                             <th>Acciones</th>
@@ -269,24 +221,24 @@ try {
                     <tbody>
                         <?php if (empty($citas)): ?>
                             <tr>
-                                <td colspan="7" style="text-align: center; color: var(--luxury-muted); padding: 20px;">No hay citas agendadas todavía.</td>
+                                <td colspan="9" style="text-align: center; color: var(--luxury-muted); padding: 20px;">No hay citas agendadas todavía.</td>
                             </tr>
                         <?php else: ?>
                             <?php 
                                 $i = 1; 
                                 foreach ($citas as $cita): 
                                     $estadoActual = $cita['estado'] ?? 'Pendiente';
+                                    $claseEstado = (strtolower($estadoActual) === 'confirmada') ? 'estado-confirmada' : 'estado-pendiente';
                                     
-                                    if (strtolower($estadoActual) === 'confirmada') {
-                                        $claseEstado = 'estado-confirmada';
-                                    } else {
-                                        $claseEstado = 'estado-pendiente';
-                                    }
+                                    $precioBase = floatval($cita['precio'] ?? 0);
+                                    $adicionalVal = floatval($cita['adicional'] ?? 0);
+                                    $totalCita = $precioBase + $adicionalVal;
                             ?>
                                 <tr>
                                     <td><?php echo $i++; ?></td>
                                     <td><strong><?php echo htmlspecialchars($cita['nombre_clienta']); ?></strong></td>
                                     <td><?php echo htmlspecialchars($cita['servicio']); ?></td>
+                                    <td>$<?php echo number_format($precioBase, 2); ?></td>
                                     <td>
                                         <form action="admin.php" method="POST" style="display: flex; gap: 4px; align-items: center;">
                                             <input type="hidden" name="accion" value="guardar_adicional">
@@ -295,6 +247,7 @@ try {
                                             <button type="submit" style="background: var(--luxury-gold, #c5a059); color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;" title="Guardar adicional"><i class="fa-solid fa-floppy-disk"></i></button>
                                         </form>
                                     </td>
+                                    <td><strong>$<?php echo number_format($totalCita, 2); ?></strong></td>
                                     <td><?php echo htmlspecialchars($cita['fecha_cita']); ?></td>
                                     <td>
                                         <span class="badge-estado <?php echo $claseEstado; ?>">
@@ -319,7 +272,6 @@ try {
             </div>
         </div>
 
-        <!-- SECCIÓN 2: DIRECTORIO DE CLIENTAS -->
         <div id="clientas-section" class="tab-content">
             <div class="section-flex-header">
                 <h3 class="section-title">Registro de Clientas</h3>
@@ -378,17 +330,14 @@ try {
                 </table>
             </div>
         </div>
-
     </div>
 
     <script>
         function switchTab(evt, sectionId) {
             const contents = document.querySelectorAll('.tab-content');
             contents.forEach(content => content.classList.remove('active'));
-
             const buttons = document.querySelectorAll('.tab-btn');
             buttons.forEach(btn => btn.classList.remove('active'));
-
             document.getElementById(sectionId).classList.add('active');
             evt.currentTarget.classList.add('active');
         }
