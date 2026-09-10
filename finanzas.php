@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 $meta_financiera = $_SESSION['meta_financiera'] ?? 50000;
 
 // ==========================================
-// PROCESAR NUEVO MOVIMIENTO FINANCIERO
+// PROCESAR NUEVO MOVIMIENTO FINANCIERO MANUAL
 // ==========================================
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'registrar_finanza') {
     $tipo = trim($_POST['tipo_movimiento'] ?? '');
@@ -61,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 }
 
 // ==========================================
-// ELIMINAR MOVIMIENTO FINANCIERO
+// ELIMINAR MOVIMIENTO FINANCIERO MANUAL
 // ==========================================
 if (isset($_GET['eliminar_finanza'])) {
     $id_finanza = intval($_GET['eliminar_finanza']);
@@ -90,7 +90,7 @@ $ganancia_total = 0;
 $movimientos = [];
 
 try {
-    // Uso de CAST(fecha AS TEXT) para compatibilidad con bases de datos estrictas como PostgreSQL
+    // 1. Obtener movimientos manuales de la tabla finanzas
     $stmtFinanzas = $pdo->prepare("SELECT * FROM finanzas WHERE CAST(fecha AS TEXT) LIKE :mes ORDER BY fecha DESC, id DESC");
     $stmtFinanzas->execute(['mes' => $mesSeleccionado . '%']);
     $movimientos = $stmtFinanzas->fetchAll(PDO::FETCH_ASSOC);
@@ -102,6 +102,38 @@ try {
             $totalGastos += floatval($m['monto']);
         }
     }
+
+    // 2. OBTENER AUTOMÁTICAMENTE LOS ADICIONALES DE LAS CITAS (Solo citas Confirmadas y del mes filtrado)
+    $stmtAdicionales = $pdo->prepare("
+        SELECT c.fecha_cita, c.adicional, u.nombre as nombre_clienta 
+        FROM citas c 
+        JOIN usuarios u ON c.clienta_id = u.id 
+        WHERE c.estado = 'Confirmada' AND c.adicional > 0 AND CAST(c.fecha_cita AS TEXT) LIKE :mes
+    ");
+    $stmtAdicionales->execute(['mes' => $mesSeleccionado . '%']);
+    $citasAdicionales = $stmtAdicionales->fetchAll(PDO::FETCH_ASSOC);
+
+    // Integrar los adicionales como ingresos automáticos en la lista
+    foreach ($citasAdicionales as $ca) {
+        $montoAdicional = floatval($ca['adicional']);
+        $totalIngresos += $montoAdicional;
+        
+        // Lo añadimos visualmente a la tabla de movimientos con una etiqueta especial
+        $movimientos[] = [
+            'id' => 'adicional_' . uniqid(),
+            'fecha' => $ca['fecha_cita'],
+            'tipo' => 'ingreso',
+            'concepto' => 'Adicional de cita - ' . $ca['nombre_clienta'],
+            'monto' => $montoAdicional,
+            'es_automatico' => true
+        ];
+    }
+
+    // Reordenar los movimientos por fecha descendente para que los nuevos aparezcan arriba
+    usort($movimientos, function($a, $b) {
+        return strcmp($b['fecha'], $a['fecha']);
+    });
+
     $ganancia_total = $totalIngresos - $totalGastos;
 
 } catch (PDOException $e) {
@@ -134,6 +166,9 @@ $meta_cumplida = $ganancia_total >= $meta_financiera;
         }
         .progress-bar-fill {
             background: linear-gradient(90deg, #d97706, #10b981); height: 100%; width: 0%; transition: width 0.5s ease;
+        }
+        .badge-automatico {
+            background-color: #e0f2fe; color: #0369a1; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: 600; margin-left: 5px;
         }
     </style>
 </head>
@@ -216,7 +251,7 @@ $meta_cumplida = $ganancia_total >= $meta_financiera;
                 <form method="POST" action="finanzas.php" style="display: flex; gap: 5px; align-items: center;">
                     <input type="hidden" name="accion" value="guardar_meta">
                     <input type="hidden" name="mes_actual" value="<?php echo htmlspecialchars($mesSeleccionado); ?>">
-                    <input type="number" step="01" name="meta_monto" placeholder="Nueva meta" value="<?php echo $meta_financiera; ?>" style="width: 110px; padding: 5px 8px; border: 1px solid var(--luxury-border); border-radius: 5px; font-size: 0.85rem;" required>
+                    <input type="number" step="1" name="meta_monto" placeholder="Nueva meta" value="<?php echo $meta_financiera; ?>" style="width: 110px; padding: 5px 8px; border: 1px solid var(--luxury-border); border-radius: 5px; font-size: 0.85rem;" required>
                     <button type="submit" style="background: #374151; color: #fff; border: none; padding: 6px 10px; border-radius: 5px; font-size: 0.8rem; cursor: pointer;">Actualizar Meta</button>
                 </form>
             </div>
@@ -301,14 +336,23 @@ $meta_cumplida = $ganancia_total >= $meta_financiera;
                                         <span class="badge-gasto">Gasto</span>
                                     <?php endif; ?>
                                 </td>
-                                <td><strong><?php echo htmlspecialchars($m['concepto']); ?></strong></td>
+                                <td>
+                                    <strong><?php echo htmlspecialchars($m['concepto']); ?></strong>
+                                    <?php if (!empty($m['es_automatico'])): ?>
+                                        <span class="badge-automatico">Automático (Adicional)</span>
+                                    <?php endif; ?>
+                                </td>
                                 <td style="font-weight: 600; color: <?php echo ($m['tipo'] === 'ingreso') ? '#047857' : '#b91c1c'; ?>;">
                                     <?php echo ($m['tipo'] === 'ingreso' ? '+' : '-'); ?>$<?php echo number_format($m['monto'], 2); ?>
                                 </td>
                                 <td>
-                                    <a href="finanzas.php?eliminar_finanza=<?php echo $m['id']; ?>&mes=<?php echo $mesSeleccionado; ?>" onclick="return confirm('¿Estás segura de eliminar este registro?');" style="color: #ef4444; text-decoration: none; font-size: 0.85rem;" title="Eliminar">
-                                        <i class="fa-solid fa-trash-can"></i>
-                                    </a>
+                                    <?php if (empty($m['es_automatico'])): ?>
+                                        <a href="finanzas.php?eliminar_finanza=<?php echo $m['id']; ?>&mes=<?php echo $mesSeleccionado; ?>" onclick="return confirm('¿Estás segura de eliminar este registro?');" style="color: #ef4444; text-decoration: none; font-size: 0.85rem;" title="Eliminar">
+                                            <i class="fa-solid fa-trash-can"></i>
+                                        </a>
+                                    <?php else: ?>
+                                        <span style="color: var(--luxury-muted); font-size: 0.75rem;" title="Este monto proviene directamente de la agenda de turnos">Desde Agenda</span>
+                                    <?php endif; ?>
                                 </td>
                             </tr>
                         <?php endforeach; ?>

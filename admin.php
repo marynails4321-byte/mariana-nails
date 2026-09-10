@@ -82,7 +82,7 @@ exit();
 endif; 
 
 // ==========================================
-// PROCESAR ACCIONES DE CITA
+// PROCESAR ACCIONES DE CITA (ESTADO Y ADICIONAL)
 // ==========================================
 if (isset($_GET['cambiar_estado']) && isset($_GET['id_cita'])) {
     $id_cita = intval($_GET['id_cita']);
@@ -93,7 +93,6 @@ if (isset($_GET['cambiar_estado']) && isset($_GET['id_cita'])) {
             $stmtEstado = $pdo->prepare("UPDATE citas SET estado = 'Confirmada' WHERE id = :id_cita");
             $stmtEstado->execute(['id_cita' => $id_cita]);
         } elseif ($accion === 'rechazar') {
-            // Actualizamos a 'Rechazada' en lugar de borrarla
             $stmtRechazar = $pdo->prepare("UPDATE citas SET estado = 'Rechazada' WHERE id = :id_cita");
             $stmtRechazar->execute(['id_cita' => $id_cita]);
         }
@@ -101,6 +100,22 @@ if (isset($_GET['cambiar_estado']) && isset($_GET['id_cita'])) {
         exit();
     } catch (PDOException $e) {
         $error_db = "Error al procesar la cita: " . $e->getMessage();
+    }
+}
+
+// Guardar valor adicional
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'guardar_adicional') {
+    $id_cita = intval($_POST['id_cita'] ?? 0);
+    $adicional = floatval($_POST['adicional'] ?? 0);
+
+    if ($id_cita > 0) {
+        try {
+            $stmtAdicional = $pdo->prepare("UPDATE citas SET adicional = :adicional WHERE id = :id_cita");
+            $stmtAdicional->execute(['adicional' => $adicional, 'id_cita' => $id_cita]);
+            $mensaje_exito = "¡Valor adicional actualizado correctamente!";
+        } catch (PDOException $e) {
+            $error_db = "Error al guardar el adicional: " . $e->getMessage();
+        }
     }
 }
 
@@ -194,7 +209,7 @@ try {
 </head>
 <body class="login-body agenda-body-align">
 
-    <div class="agenda-container" style="max-width: 1000px; width: 100%;">
+    <div class="agenda-container" style="max-width: 1100px; width: 100%;">
         
         <!-- ENCABEZADO PRINCIPAL -->
         <div class="agenda-header">
@@ -235,7 +250,7 @@ try {
         <div id="citas-section" class="tab-content active">
             <div class="section-flex-header">
                 <h3 class="section-title">Próximos Turnos Agendados</h3>
-                <span class="section-hint">Gestiona el estado de las citas</span>
+                <span class="section-hint">Gestiona estados y valores adicionales</span>
             </div>
 
             <div class="table-responsive">
@@ -245,6 +260,7 @@ try {
                             <th>#</th>
                             <th>Clienta</th>
                             <th>Servicio Solicitado</th>
+                            <th>Adicional ($)</th>
                             <th>Fecha y Hora</th>
                             <th>Estado</th>
                             <th>Acciones</th>
@@ -253,7 +269,7 @@ try {
                     <tbody>
                         <?php if (empty($citas)): ?>
                             <tr>
-                                <td colspan="6" style="text-align: center; color: var(--luxury-muted); padding: 20px;">No hay citas agendadas todavía.</td>
+                                <td colspan="7" style="text-align: center; color: var(--luxury-muted); padding: 20px;">No hay citas agendadas todavía.</td>
                             </tr>
                         <?php else: ?>
                             <?php 
@@ -261,7 +277,6 @@ try {
                                 foreach ($citas as $cita): 
                                     $estadoActual = $cita['estado'] ?? 'Pendiente';
                                     
-                                    // Determinar clase de estado de forma segura
                                     if (strtolower($estadoActual) === 'confirmada') {
                                         $claseEstado = 'estado-confirmada';
                                     } elseif (strtolower($estadoActual) === 'rechazada') {
@@ -274,6 +289,14 @@ try {
                                     <td><?php echo $i++; ?></td>
                                     <td><strong><?php echo htmlspecialchars($cita['nombre_clienta']); ?></strong></td>
                                     <td><?php echo htmlspecialchars($cita['servicio']); ?></td>
+                                    <td>
+                                        <form action="admin.php" method="POST" style="display: flex; gap: 4px; align-items: center;">
+                                            <input type="hidden" name="accion" value="guardar_adicional">
+                                            <input type="hidden" name="id_cita" value="<?php echo $cita['id']; ?>">
+                                            <input type="number" step="0.01" name="adicional" value="<?php echo htmlspecialchars($cita['adicional'] ?? 0); ?>" placeholder="0.00" style="width: 80px; padding: 4px; border: 1px solid var(--luxury-border); border-radius: 4px; font-size: 0.8rem;">
+                                            <button type="submit" style="background: var(--luxury-gold, #c5a059); color: white; border: none; padding: 5px 8px; border-radius: 4px; cursor: pointer; font-size: 0.75rem;" title="Guardar adicional"><i class="fa-solid fa-floppy-disk"></i></button>
+                                        </form>
+                                    </td>
                                     <td><?php echo htmlspecialchars($cita['fecha_cita']); ?></td>
                                     <td>
                                         <span class="badge-estado <?php echo $claseEstado; ?>">
@@ -281,12 +304,14 @@ try {
                                         </span>
                                     </td>
                                     <td>
-                                        <a href="admin.php?cambiar_estado=confirmar&id_cita=<?php echo $cita['id']; ?>" class="btn-accion-aceptar" title="Aceptar cita">
-                                            <i class="fa-solid fa-check"></i> Aceptar
-                                        </a>
-                                        <a href="admin.php?cambiar_estado=rechazar&id_cita=<?php echo $cita['id']; ?>" class="btn-accion-rechazar" title="Rechazar cita" onclick="return confirm('¿Estás segura de rechazar este turno? Su estado cambiará a rechazada.');">
-                                            <i class="fa-solid fa-xmark"></i> Rechazar
-                                        </a>
+                                        <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+                                            <a href="admin.php?cambiar_estado=confirmar&id_cita=<?php echo $cita['id']; ?>" class="btn-accion-aceptar" title="Aceptar cita">
+                                                <i class="fa-solid fa-check"></i>
+                                            </a>
+                                            <a href="admin.php?cambiar_estado=rechazar&id_cita=<?php echo $cita['id']; ?>" class="btn-accion-rechazar" title="Rechazar cita" onclick="return confirm('¿Estás segura de rechazar este turno?');">
+                                                <i class="fa-solid fa-xmark"></i>
+                                            </a>
+                                        </div>
                                     </td>
                                 </tr>
                             <?php endforeach; ?>
@@ -303,7 +328,6 @@ try {
                 <span class="section-hint">Datos de acceso y cumpleaños</span>
             </div>
 
-            <!-- Formulario pequeño para registrar clienta -->
             <div style="background: #faf7f2; padding: 15px 20px; border-radius: 8px; border: 1px solid var(--luxury-border); margin-bottom: 20px;">
                 <form action="admin.php" method="POST" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
                     <input type="hidden" name="accion" value="crear_clienta">
@@ -345,7 +369,7 @@ try {
                                     <td><?php echo htmlspecialchars($c['fnacimiento']); ?></td>
                                     <td><?php echo htmlspecialchars($c['creado_en'] ?? $c['creado_at'] ?? 'Sin fecha'); ?></td>
                                     <td>
-                                        <a href="admin.php?eliminar_clienta=<?php echo $c['id']; ?>" class="btn-accion-rechazar" title="Eliminar clienta" onclick="return confirm('¿Estás segura de eliminar a esta clienta? Se borrará su registro y sus citas asociadas.');">
+                                        <a href="admin.php?eliminar_clienta=<?php echo $c['id']; ?>" class="btn-accion-rechazar" title="Eliminar clienta" onclick="return confirm('¿Estás segura de eliminar a esta clienta?');">
                                             <i class="fa-solid fa-trash"></i> Eliminar
                                         </a>
                                     </td>
