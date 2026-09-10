@@ -33,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['nombre_clienta'] = $nombre;
             $_SESSION['clienta_logged'] = true;
 
-            // NUEVO: Guardar cookie por 30 días para recordar el dispositivo y evitar duplicados
+            // Guardar cookie por 30 días para recordar el dispositivo
             setcookie('cookie_clienta_id', $_SESSION['clienta_id'], time() + (86400 * 30), "/");
             setcookie('cookie_clienta_nombre', $nombre, time() + (86400 * 30), "/");
 
@@ -56,13 +56,17 @@ $nombre_clienta = $_SESSION['nombre_clienta'];
 $clienta_id = $_SESSION['clienta_id'] ?? null;
 
 // ==========================================
-// CARGAR LAS CITAS REALES DE ESTA CLIENTA
+// CARGAR LAS CITAS DE LA CLIENTA (Ocultando rechazadas después de 24h)
 // ==========================================
 try {
     if ($clienta_id) {
         $stmtCitasClienta = $pdo->prepare("
             SELECT * FROM citas 
             WHERE clienta_id = :clienta_id 
+            AND (
+                estado != 'Rechazada' 
+                OR (estado = 'Rechazada' AND rechazada_en >= NOW() - INTERVAL '24 HOURS')
+            )
             ORDER BY fecha_cita DESC
         ");
         $stmtCitasClienta->execute(['clienta_id' => $clienta_id]);
@@ -143,9 +147,8 @@ try {
         <!-- Botones de Acción -->
         <div style="display: flex; gap: 15px; flex-wrap: wrap;">
             <a href="agendar.php" class="btn-luxury" style="flex: 1; text-decoration: none; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 8px;">
-    <i class="fa-solid fa-plus-circle"></i> Agendar Nueva Cita
-</a>
-            </button>
+                <i class="fa-solid fa-plus-circle"></i> Agendar Nueva Cita
+            </a>
             <button type="button" class="btn-luxury" style="flex: 1; background: linear-gradient(135deg, #3a2e2b 0%, #2b2d42 100%); color: #ffffff;" onclick="alert('Próximamente: Historial de tus servicios anteriores.');">
                 <i class="fa-solid fa-clock-rotate-left"></i> Historial de Turnos
             </button>

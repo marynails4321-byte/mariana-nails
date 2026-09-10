@@ -93,7 +93,8 @@ if (isset($_GET['cambiar_estado']) && isset($_GET['id_cita'])) {
             $stmtEstado = $pdo->prepare("UPDATE citas SET estado = 'Confirmada' WHERE id = :id_cita");
             $stmtEstado->execute(['id_cita' => $id_cita]);
         } elseif ($accion === 'rechazar') {
-            $stmtRechazar = $pdo->prepare("UPDATE citas SET estado = 'Rechazada' WHERE id = :id_cita");
+            // Al rechazar, actualizamos el estado y guardamos la fecha/hora exacta en rechazada_en
+            $stmtRechazar = $pdo->prepare("UPDATE citas SET estado = 'Rechazada', rechazada_en = NOW() WHERE id = :id_cita");
             $stmtRechazar->execute(['id_cita' => $id_cita]);
         }
         header("Location: admin.php");
@@ -160,16 +161,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 }
 
 // ==========================================
-// OBTENER DATOS
+// OBTENER DATOS (Excluyendo las citas rechazadas para el admin)
 // ==========================================
 try {
     $stmtClientas = $pdo->query("SELECT * FROM usuarios WHERE rol = 'clienta' ORDER BY id DESC");
     $clientas = $stmtClientas->fetchAll(PDO::FETCH_ASSOC);
 
+    // Se agrega c.estado != 'Rechazada' para que desaparezcan inmediatamente al admin
     $stmtCitas = $pdo->query("
         SELECT c.*, u.nombre as nombre_clienta 
         FROM citas c 
         JOIN usuarios u ON c.clienta_id = u.id 
+        WHERE c.estado != 'Rechazada'
         ORDER BY c.fecha_cita DESC
     ");
     $citas = $stmtCitas->fetchAll(PDO::FETCH_ASSOC);
@@ -204,7 +207,6 @@ try {
         }
         .estado-pendiente { background-color: #fff3cd; color: #664d03; border: 1px solid #ffecb5; }
         .estado-confirmada { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
-        .estado-rechazada { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
     </style>
 </head>
 <body class="login-body agenda-body-align">
@@ -279,8 +281,6 @@ try {
                                     
                                     if (strtolower($estadoActual) === 'confirmada') {
                                         $claseEstado = 'estado-confirmada';
-                                    } elseif (strtolower($estadoActual) === 'rechazada') {
-                                        $claseEstado = 'estado-rechazada';
                                     } else {
                                         $claseEstado = 'estado-pendiente';
                                     }
