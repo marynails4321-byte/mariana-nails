@@ -135,10 +135,12 @@ try {
     $stmtClientas = $pdo->query("SELECT * FROM usuarios WHERE rol = 'clienta' ORDER BY id DESC");
     $clientas = $stmtClientas->fetchAll(PDO::FETCH_ASSOC);
 
+    // CONSULTA ACTUALIZADA CON JOIN A LA TABLA SERVICIOS
     $stmtCitas = $pdo->query("
-        SELECT c.*, u.nombre as nombre_clienta 
+        SELECT c.*, u.nombre as nombre_clienta, s.nombre as nombre_servicio, s.precio as precio_servicio 
         FROM citas c 
         JOIN usuarios u ON c.clienta_id = u.id 
+        LEFT JOIN servicios s ON c.servicio_id = s.id 
         WHERE c.estado != 'Rechazada'
         ORDER BY c.fecha_cita DESC
     ");
@@ -230,14 +232,18 @@ try {
                                     $estadoActual = $cita['estado'] ?? 'Pendiente';
                                     $claseEstado = (strtolower($estadoActual) === 'confirmada') ? 'estado-confirmada' : 'estado-pendiente';
                                     
-                                    $precioBase = floatval($cita['precio'] ?? 0);
+                                    // Cambiado para usar el precio que viene de la tabla servicios
+                                    $precioBase = floatval($cita['precio_servicio'] ?? 0);
                                     $adicionalVal = floatval($cita['adicional'] ?? 0);
                                     $totalCita = $precioBase + $adicionalVal;
+
+                                    // Muestra el nombre del servicio de la tabla servicios o por defecto lo que tenga guardado la cita
+                                    $nombreServicioMostrar = $cita['nombre_servicio'] ?? ($cita['servicio'] ?? 'Servicio');
                             ?>
                                 <tr>
                                     <td><?php echo $i++; ?></td>
                                     <td><strong><?php echo htmlspecialchars($cita['nombre_clienta']); ?></strong></td>
-                                    <td><?php echo htmlspecialchars($cita['servicio']); ?></td>
+                                    <td><?php echo htmlspecialchars($nombreServicioMostrar); ?></td>
                                     <td>$<?php echo number_format($precioBase, 2); ?></td>
                                     <td>
                                         <form action="admin.php" method="POST" style="display: flex; gap: 4px; align-items: center;">

@@ -103,29 +103,41 @@ try {
         }
     }
 
-    // 2. OBTENER AUTOMÁTICAMENTE LOS ADICIONALES DE LAS CITAS (Solo citas Confirmadas y del mes filtrado)
-    $stmtAdicionales = $pdo->prepare("
-        SELECT c.fecha_cita, c.adicional, u.nombre as nombre_clienta 
+    // 2. OBTENER AUTOMÁTICAMENTE LAS CITAS Y UNIR CON LA TABLA SERVICIOS PARA SUMAR PRECIO + ADICIONAL
+    $stmtCitasFinanzas = $pdo->prepare("
+        SELECT c.fecha_cita, c.adicional, u.nombre as nombre_clienta, s.nombre as nombre_servicio, s.precio as precio_servicio 
         FROM citas c 
         JOIN usuarios u ON c.clienta_id = u.id 
-        WHERE c.estado = 'Confirmada' AND c.adicional > 0 AND CAST(c.fecha_cita AS TEXT) LIKE :mes
+        LEFT JOIN servicios s ON c.servicio_id = s.id 
+        WHERE c.estado = 'Confirmada' AND CAST(c.fecha_cita AS TEXT) LIKE :mes
     ");
-    $stmtAdicionales->execute(['mes' => $mesSeleccionado . '%']);
-    $citasAdicionales = $stmtAdicionales->fetchAll(PDO::FETCH_ASSOC);
+    $stmtCitasFinanzas->execute(['mes' => $mesSeleccionado . '%']);
+    $citasConfirmadas = $stmtCitasFinanzas->fetchAll(PDO::FETCH_ASSOC);
 
-    // Integrar los adicionales como ingresos automáticos en la lista
-    foreach ($citasAdicionales as $ca) {
-        $montoAdicional = floatval($ca['adicional']);
-        $totalIngresos += $montoAdicional;
-        
-        $movimientos[] = [
-            'id' => 'adicional_' . uniqid(),
-            'fecha' => $ca['fecha_cita'],
-            'tipo' => 'ingreso',
-            'concepto' => 'Adicional de cita - ' . $ca['nombre_clienta'],
-            'monto' => $montoAdicional,
-            'es_automatico' => true
-        ];
+    // Integrar las citas como ingresos automáticos sumando Precio del Servicio + Adicional
+    foreach ($citasConfirmadas as $cc) {
+        $precioServicio = floatval($cc['precio_servicio'] ?? 0);
+        $montoAdicional = floatval($cc['adicional'] ?? 0);
+        $totalCita = $precioServicio + $montoAdicional;
+
+        if ($totalCita > 0) {
+            $totalIngresos += $totalCita;
+            
+            $nombreServicioText = $cc['nombre_servicio'] ?? 'Servicio de uña';
+            $detalleConcepto = "$nombreServicioText - " . $cc['nombre_clienta'];
+            if ($montoAdicional > 0) {
+                $detalleConcepto .= " (Base: $" . number_format($precioServicio, 2) . " + Adicional: $" . number_format($montoAdicional, 2) . ")";
+            }
+
+            $movimientos[] = [
+                'id' => 'cita_' . uniqid(),
+                'fecha' => $cc['fecha_cita'],
+                'tipo' => 'ingreso',
+                'concepto' => $detalleConcepto,
+                'monto' => $totalCita,
+                'es_automatico' => true
+            ];
+        }
     }
 
     // Reordenar los movimientos por fecha descendente
@@ -338,7 +350,7 @@ $meta_cumplida = $ganancia_total >= $meta_financiera;
                                 <td>
                                     <strong><?php echo htmlspecialchars($m['concepto']); ?></strong>
                                     <?php if (!empty($m['es_automatico'])): ?>
-                                        <span class="badge-automatico">Automático (Adicional)</span>
+                                        <span class="badge-automatico">Automático (Agenda)</span>
                                     <?php endif; ?>
                                 </td>
                                 <td style="font-weight: 600; color: <?php echo ($m['tipo'] === 'ingreso') ? '#047857' : '#b91c1c'; ?>;">
