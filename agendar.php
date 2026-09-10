@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fecha_hora_cita = $fecha_seleccionada . ' ' . $hora_seleccionada . ':00';
         
         try {
-            // 1. Buscar el precio exacto del servicio seleccionado en la base de datos
+            // 1. Obtener de forma informativa el precio del servicio para el mensaje de WhatsApp (sin guardarlo en citas)
             $stmtPrecio = $pdo->prepare("SELECT precio FROM servicios WHERE nombre = :nombre LIMIT 1");
             $stmtPrecio->execute(['nombre' => $servicio]);
             $datosServicio = $stmtPrecio->fetch(PDO::FETCH_ASSOC);
@@ -50,15 +50,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($cita_existente) {
                 $error = "Gracias por tu interes pero esta hora ya se encuentra agendada. Lo sentimos, debe haber un espacio mínimo de 3 horas entre cada turno.";
             } else {
-                // 3. Insertar la cita guardando también el precio base
+                // 3. Insertar la cita SIN la columna precio (ya que la tabla citas no la tiene)
                 $stmtInsert = $pdo->prepare("
-                    INSERT INTO citas (clienta_id, servicio, precio, foto_ejemplo, fecha_cita, estado) 
-                    VALUES (:clienta_id, :servicio, :precio, :foto_ejemplo, :fecha_cita, 'Pendiente')
+                    INSERT INTO citas (clienta_id, servicio, foto_ejemplo, fecha_cita, estado) 
+                    VALUES (:clienta_id, :servicio, :foto_ejemplo, :fecha_cita, 'Pendiente')
                 ");
                 $stmtInsert->execute(array(
                     'clienta_id' => $clienta_id,
                     'servicio' => $servicio,
-                    'precio' => $precio_servicio,
                     'foto_ejemplo' => $foto_ejemplo,
                     'fecha_cita' => $fecha_hora_cita
                 ));
