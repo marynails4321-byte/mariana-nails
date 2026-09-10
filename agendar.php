@@ -32,9 +32,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fecha_hora_cita = $fecha_seleccionada . ' ' . $hora_seleccionada . ':00';
         
        try {
+            // CORREGIDO: Se agregó AND estado != 'Rechazada' para liberar el horario si la admin lo rechazó
             $stmtCheck = $pdo->prepare("
                 SELECT fecha_cita FROM citas 
-                WHERE ABS(EXTRACT(EPOCH FROM (fecha_cita - :nueva_cita::timestamp))) < 10800
+                WHERE estado != 'Rechazada' 
+                AND ABS(EXTRACT(EPOCH FROM (fecha_cita - :nueva_cita::timestamp))) < 10800
             ");
             $stmtCheck->execute(array('nueva_cita' => $fecha_hora_cita));
             $cita_existente = $stmtCheck->fetch();
