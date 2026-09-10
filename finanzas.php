@@ -90,7 +90,14 @@ $ganancia_total = 0;
 $movimientos = [];
 
 try {
-    // 1. Obtener movimientos manuales de la tabla finanzas
+    // 1. Cargar el catálogo completo de servicios para buscar precios de forma segura
+    $stmtCat = $pdo->query("SELECT nombre, precio FROM servicios");
+    $catalogo_servicios = [];
+    while ($serv = $stmtCat->fetch(PDO::FETCH_ASSOC)) {
+        $catalogo_servicios[strtolower(trim($serv['nombre']))] = floatval($serv['precio']);
+    }
+
+    // 2. Obtener movimientos manuales de la tabla finanzas
     $stmtFinanzas = $pdo->prepare("SELECT * FROM finanzas WHERE CAST(fecha AS TEXT) LIKE :mes ORDER BY fecha DESC, id DESC");
     $stmtFinanzas->execute(['mes' => $mesSeleccionado . '%']);
     $movimientos = $stmtFinanzas->fetchAll(PDO::FETCH_ASSOC);
@@ -103,29 +110,42 @@ try {
         }
     }
 
-    // 2. OBTENER AUTOMÁTICAMENTE LAS CITAS Y UNIR CON LA TABLA SERVICIOS PARA SUMAR PRECIO + ADICIONAL
+    // 3. OBTENER CITAS Y UNIR CON USUARIOS USANDO EL CAMPO TEXTUAL 'servicio'
     $stmtCitasFinanzas = $pdo->prepare("
-        SELECT c.fecha_cita, c.adicional, u.nombre as nombre_clienta, s.nombre as nombre_servicio, s.precio as precio_servicio 
+        SELECT c.fecha_cita, c.servicio, c.adicional, u.nombre as nombre_clienta 
         FROM citas c 
         JOIN usuarios u ON c.clienta_id = u.id 
-        LEFT JOIN servicios s ON c.servicio_id = s.id 
         WHERE c.estado = 'Confirmada' AND CAST(c.fecha_cita AS TEXT) LIKE :mes
     ");
     $stmtCitasFinanzas->execute(['mes' => $mesSeleccionado . '%']);
     $citasConfirmadas = $stmtCitasFinanzas->fetchAll(PDO::FETCH_ASSOC);
 
-    // Integrar las citas como ingresos automáticos sumando Precio del Servicio + Adicional
+    // Integrar las citas como ingresos automáticos buscando el precio en el catálogo
     foreach ($citasConfirmadas as $cc) {
-        $precioServicio = floatval($cc['precio_servicio'] ?? 0);
+        $nombreServicioCita = trim($cc['servicio'] ?? '');
+        $keyServicio = strtolower($nombreServicioCita);
+        
+        $precioServicio = 0;
+        // Búsqueda exacta o parcial del precio en el catálogo
+        if (isset($catalogo_servicios[$keyServicio])) {
+            $precioServicio = $catalogo_servicios[$keyServicio];
+        } else {
+            foreach ($catalogo_servicios as $catNombre => $catPrecio) {
+                if (!empty($keyServicio) && (strpos($keyServicio, $catNombre) !== false || strpos($catNombre, $keyServicio) !== false)) {
+                    $precioServicio = $catPrecio;
+                    break;
+                }
+            }
+        }
+
         $montoAdicional = floatval($cc['adicional'] ?? 0);
         $totalCita = $precioServicio + $montoAdicional;
 
-        if ($totalCita > 0) {
+        if ($totalCita > 0 || !empty($nombreServicioCita)) {
             $totalIngresos += $totalCita;
             
-            $nombreServicioText = $cc['nombre_servicio'] ?? 'Servicio de uña';
-            $detalleConcepto = "$nombreServicioText - " . $cc['nombre_clienta'];
-            if ($montoAdicional > 0) {
+            $detalleConcepto = ($nombreServicioCita !== '' ? $nombreServicioCita : "Servicio de uña") . " - " . $cc['nombre_clienta'];
+            if ($precioServicio > 0 || $montoAdicional > 0) {
                 $detalleConcepto .= " (Base: $" . number_format($precioServicio, 2) . " + Adicional: $" . number_format($montoAdicional, 2) . ")";
             }
 
