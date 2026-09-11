@@ -117,17 +117,18 @@ if (isset($_GET['eliminar_clienta'])) {
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'crear_clienta') {
     $nuevo_nombre = trim($_POST['nuevo_nombre'] ?? '');
+    $nuevo_telefono = trim($_POST['nuevo_telefono'] ?? '');
     $nueva_fnac = trim($_POST['nueva_fnac'] ?? '');
     if (!empty($nuevo_nombre) && !empty($nueva_fnac)) {
         try {
-            $stmtInsert = $pdo->prepare("INSERT INTO usuarios (nombre, fnacimiento, rol) VALUES (:nombre, :fnac, 'clienta')");
-            $stmtInsert->execute(['nombre' => $nuevo_nombre, 'fnac' => $nueva_fnac]);
+            $stmtInsert = $pdo->prepare("INSERT INTO usuarios (nombre, telefono, fnacimiento, rol) VALUES (:nombre, :telefono, :fnac, 'clienta')");
+            $stmtInsert->execute(['nombre' => $nuevo_nombre, 'telefono' => $nuevo_telefono, 'fnac' => $nueva_fnac]);
             $mensaje_exito = "¡Clienta registrada exitosamente!";
         } catch (PDOException $e) {
             $error_db = "Error al registrar la clienta: " . $e->getMessage();
         }
     } else {
-        $error_db = "Por favor completa todos los campos.";
+        $error_db = "Por favor completa los campos obligatorios.";
     }
 }
 
@@ -135,9 +136,9 @@ try {
     $stmtClientas = $pdo->query("SELECT * FROM usuarios WHERE rol = 'clienta' ORDER BY id DESC");
     $clientas = $stmtClientas->fetchAll(PDO::FETCH_ASSOC);
 
-    // Consulta con JOIN intentando traer el precio de la tabla servicios
+    // Consulta con JOIN trayendo también el teléfono de la tabla usuarios (u.telefono)
     $stmtCitas = $pdo->query("
-        SELECT c.*, u.nombre as nombre_clienta, s.nombre as nombre_servicio, s.precio as precio_servicio 
+        SELECT c.*, u.nombre as nombre_clienta, u.telefono as telefono_clienta, s.nombre as nombre_servicio, s.precio as precio_servicio 
         FROM citas c 
         JOIN usuarios u ON c.clienta_id = u.id 
         LEFT JOIN servicios s ON c.servicio_id = s.id 
@@ -146,7 +147,6 @@ try {
     ");
     $citas = $stmtCitas->fetchAll(PDO::FETCH_ASSOC);
 
-    // Diccionario de respaldo por si el servicio_id de la cita no está vinculado en la base de datos
     $stmtPreciosFijos = $pdo->query("SELECT nombre, precio FROM servicios");
     $precios_catalogo = [];
     while($row = $stmtPreciosFijos->fetch(PDO::FETCH_ASSOC)) {
@@ -219,6 +219,7 @@ try {
                         <tr>
                             <th>#</th>
                             <th>Clienta</th>
+                            <th>Teléfono</th>
                             <th>Servicio Solicitado</th>
                             <th>Precio Servicio</th>
                             <th>Adicional ($)</th>
@@ -231,7 +232,7 @@ try {
                     <tbody>
                         <?php if (empty($citas)): ?>
                             <tr>
-                                <td colspan="9" style="text-align: center; color: var(--luxury-muted); padding: 20px;">No hay citas agendadas todavía.</td>
+                                <td colspan="10" style="text-align: center; color: var(--luxury-muted); padding: 20px;">No hay citas agendadas todavía.</td>
                             </tr>
                         <?php else: ?>
                             <?php 
@@ -240,10 +241,8 @@ try {
                                     $estadoActual = $cita['estado'] ?? 'Pendiente';
                                     $claseEstado = (strtolower($estadoActual) === 'confirmada') ? 'estado-confirmada' : 'estado-pendiente';
                                     
-                                    // Obtenemos el nombre del servicio
                                     $nombreServicioMostrar = $cita['nombre_servicio'] ?? ($cita['servicio'] ?? 'Servicio');
                                     
-                                    // Determinamos el precio: 1) Del JOIN, 2) Del respaldo por nombre, 3) 0
                                     $precioBase = floatval($cita['precio_servicio'] ?? 0);
                                     if ($precioBase <= 0) {
                                         $nombreKey = strtolower(trim($nombreServicioMostrar));
@@ -258,6 +257,7 @@ try {
                                 <tr>
                                     <td><?php echo $i++; ?></td>
                                     <td><strong><?php echo htmlspecialchars($cita['nombre_clienta']); ?></strong></td>
+                                    <td><?php echo htmlspecialchars($cita['telefono_clienta'] ?? 'No registrado'); ?></td>
                                     <td><?php echo htmlspecialchars($nombreServicioMostrar); ?></td>
                                     <td>$<?php echo number_format($precioBase, 2); ?></td>
                                     <td>
@@ -296,17 +296,21 @@ try {
         <div id="clientas-section" class="tab-content">
             <div class="section-flex-header">
                 <h3 class="section-title">Registro de Clientas</h3>
-                <span class="section-hint">Datos de acceso y cumpleaños</span>
+                <span class="section-hint">Datos de acceso, teléfono y cumpleaños</span>
             </div>
 
             <div style="background: #faf7f2; padding: 15px 20px; border-radius: 8px; border: 1px solid var(--luxury-border); margin-bottom: 20px;">
                 <form action="admin.php" method="POST" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
                     <input type="hidden" name="accion" value="crear_clienta">
-                    <div style="flex: 2; min-width: 200px;">
+                    <div style="flex: 2; min-width: 180px;">
                         <label style="display: block; font-size: 0.8rem; color: var(--luxury-muted); margin-bottom: 5px;">Nombre Completo</label>
                         <input type="text" name="nuevo_nombre" placeholder="Ej. Andrea Pérez" required style="width: 100%; padding: 8px; border: 1px solid var(--luxury-border); border-radius: 6px; font-size: 0.9rem;">
                     </div>
-                    <div style="flex: 1; min-width: 150px;">
+                    <div style="flex: 1.5; min-width: 150px;">
+                        <label style="display: block; font-size: 0.8rem; color: var(--luxury-muted); margin-bottom: 5px;">Teléfono</label>
+                        <input type="tel" name="nuevo_telefono" placeholder="Ej. 3001234567" style="width: 100%; padding: 8px; border: 1px solid var(--luxury-border); border-radius: 6px; font-size: 0.9rem;">
+                    </div>
+                    <div style="flex: 1.5; min-width: 150px;">
                         <label style="display: block; font-size: 0.8rem; color: var(--luxury-muted); margin-bottom: 5px;">Fecha de Nacimiento</label>
                         <input type="date" name="nueva_fnac" required style="width: 100%; padding: 8px; border: 1px solid var(--luxury-border); border-radius: 6px; font-size: 0.9rem;">
                     </div>
@@ -322,6 +326,7 @@ try {
                         <tr>
                             <th>ID</th>
                             <th>Nombre Completo</th>
+                            <th>Teléfono</th>
                             <th>Fecha de Nacimiento</th>
                             <th>Registro</th>
                             <th>Acciones</th>
@@ -330,13 +335,14 @@ try {
                     <tbody>
                         <?php if (empty($clientas)): ?>
                             <tr>
-                                <td colspan="5" style="text-align: center; color: var(--luxury-muted); padding: 20px;">No hay clientas registradas todavía.</td>
+                                <td colspan="6" style="text-align: center; color: var(--luxury-muted); padding: 20px;">No hay clientas registradas todavía.</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($clientas as $c): ?>
                                 <tr>
                                     <td><?php echo htmlspecialchars($c['id']); ?></td>
                                     <td><strong><?php echo htmlspecialchars($c['nombre']); ?></strong></td>
+                                    <td><?php echo htmlspecialchars($c['telefono'] ?? 'No registrado'); ?></td>
                                     <td><?php echo htmlspecialchars($c['fnacimiento']); ?></td>
                                     <td><?php echo htmlspecialchars($c['creado_en'] ?? $c['creado_at'] ?? 'Sin fecha'); ?></td>
                                     <td>

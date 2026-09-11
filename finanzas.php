@@ -61,11 +61,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
 }
 
 // ==========================================
-// ELIMINAR MOVIMIENTO FINANCIERO MANUAL
+// ELIMINAR MOVIMIENTO INDIVIDUAL O MÚLTIPLE
 // ==========================================
+$mes_actual_get = $_GET['mes'] ?? ($_POST['mes'] ?? date('Y-m'));
+
+// Eliminación masiva vía POST
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'eliminar_seleccionados') {
+    $ids_a_eliminar = $_POST['ids_finanzas'] ?? [];
+    if (!empty($ids_a_eliminar) && is_array($ids_a_eliminar)) {
+        try {
+            // Filtrar solo IDs numéricos para mayor seguridad
+            $ids_filtrados = array_map('intval', $ids_a_eliminar);
+            $placeholders = implode(',', array_fill(0, count($ids_filtrados), '?'));
+            
+            $stmtDelMulti = $pdo->prepare("DELETE FROM finanzas WHERE id IN ($placeholders)");
+            $stmtDelMulti->execute($ids_filtrados);
+            
+            header("Location: finanzas.php?mes=" . $mes_actual_get);
+            exit();
+        } catch (PDOException $e) {
+            $error_db = "Error al eliminar los movimientos seleccionados.";
+        }
+    } else {
+        $error_db = "No seleccionaste ningún movimiento manual para eliminar.";
+    }
+}
+
+// Eliminación individual vía GET
 if (isset($_GET['eliminar_finanza'])) {
     $id_finanza = intval($_GET['eliminar_finanza']);
-    $mes_actual_get = $_GET['mes'] ?? date('Y-m');
     try {
         $stmtDelFinanza = $pdo->prepare("DELETE FROM finanzas WHERE id = :id");
         $stmtDelFinanza->execute(['id' => $id_finanza]);
@@ -126,7 +150,6 @@ try {
         $keyServicio = strtolower($nombreServicioCita);
         
         $precioServicio = 0;
-        // Búsqueda exacta o parcial del precio en el catálogo
         if (isset($catalogo_servicios[$keyServicio])) {
             $precioServicio = $catalogo_servicios[$keyServicio];
         } else {
@@ -339,60 +362,94 @@ $meta_cumplida = $ganancia_total >= $meta_financiera;
             </form>
         </div>
 
-        <!-- TABLA DE HISTORIAL -->
-        <div class="table-responsive">
-            <table class="luxury-table">
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Tipo</th>
-                        <th>Concepto</th>
-                        <th>Monto</th>
-                        <th>Acción</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php if (empty($movimientos)): ?>
+        <!-- TABLA DE HISTORIAL CON SELECCIÓN MÚLTIPLE -->
+        <form action="finanzas.php" method="POST" id="form-acciones-multiples">
+            <input type="hidden" name="accion" value="eliminar_seleccionados">
+            <input type="hidden" name="mes" value="<?php echo htmlspecialchars($mesSeleccionado); ?>">
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                <h4 style="margin: 0; font-size: 1rem; color: #374151;">Historial de Movimientos</h4>
+                <button type="submit" onclick="return confirm('¿Estás segura de eliminar todos los movimientos manuales seleccionados?');" style="background: #ef4444; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; cursor: pointer; display: inline-flex; align-items: center; gap: 5px;">
+                    <i class="fa-solid fa-trash-can"></i> Eliminar Seleccionados
+                </button>
+            </div>
+
+            <div class="table-responsive">
+                <table class="luxury-table">
+                    <thead>
                         <tr>
-                            <td colspan="5" style="text-align: center; color: var(--luxury-muted); padding: 20px;">No hay movimientos registrados en el mes de <strong><?php echo htmlspecialchars($mesSeleccionado); ?></strong>.</td>
+                            <th style="width: 40px; text-align: center;">
+                                <input type="checkbox" id="seleccionar-todos" title="Seleccionar todo">
+                            </th>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Concepto</th>
+                            <th>Monto</th>
+                            <th>Acción</th>
                         </tr>
-                    <?php else: ?>
-                        <?php foreach ($movimientos as $m): ?>
+                    </thead>
+                    <tbody>
+                        <?php if (empty($movimientos)): ?>
                             <tr>
-                                <td><?php echo htmlspecialchars($m['fecha']); ?></td>
-                                <td>
-                                    <?php if ($m['tipo'] === 'ingreso'): ?>
-                                        <span class="badge-ingreso">Ingreso</span>
-                                    <?php else: ?>
-                                        <span class="badge-gasto">Gasto</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <strong><?php echo htmlspecialchars($m['concepto']); ?></strong>
-                                    <?php if (!empty($m['es_automatico'])): ?>
-                                        <span class="badge-automatico">Automático (Agenda)</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td style="font-weight: 600; color: <?php echo ($m['tipo'] === 'ingreso') ? '#047857' : '#b91c1c'; ?>;">
-                                    <?php echo ($m['tipo'] === 'ingreso' ? '+' : '-'); ?>$<?php echo number_format($m['monto'], 2); ?>
-                                </td>
-                                <td>
-                                    <?php if (empty($m['es_automatico'])): ?>
-                                        <a href="finanzas.php?eliminar_finanza=<?php echo $m['id']; ?>&mes=<?php echo $mesSeleccionado; ?>" onclick="return confirm('¿Estás segura de eliminar este registro?');" style="color: #ef4444; text-decoration: none; font-size: 0.85rem;" title="Eliminar">
-                                            <i class="fa-solid fa-trash-can"></i>
-                                        </a>
-                                    <?php else: ?>
-                                        <span style="color: var(--luxury-muted); font-size: 0.75rem;" title="Este monto proviene directamente de la agenda de turnos">Desde Agenda</span>
-                                    <?php endif; ?>
-                                </td>
+                                <td colspan="6" style="text-align: center; color: var(--luxury-muted); padding: 20px;">No hay movimientos registrados en el mes de <strong><?php echo htmlspecialchars($mesSeleccionado); ?></strong>.</td>
                             </tr>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
-                </tbody>
-            </table>
-        </div>
+                        <?php else: ?>
+                            <?php foreach ($movimientos as $m): ?>
+                                <tr>
+                                    <td style="text-align: center;">
+                                        <?php if (empty($m['es_automatico'])): ?>
+                                            <input type="checkbox" name="ids_finanzas[]" value="<?php echo $m['id']; ?>" class="check-movimiento">
+                                        <?php else: ?>
+                                            <span style="color: #d1d5db;">-</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td><?php echo htmlspecialchars($m['fecha']); ?></td>
+                                    <td>
+                                        <?php if ($m['tipo'] === 'ingreso'): ?>
+                                            <span class="badge-ingreso">Ingreso</span>
+                                        <?php else: ?>
+                                            <span class="badge-gasto">Gasto</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td>
+                                        <strong><?php echo htmlspecialchars($m['concepto']); ?></strong>
+                                        <?php if (!empty($m['es_automatico'])): ?>
+                                            <span class="badge-automatico">Automático (Agenda)</span>
+                                        <?php endif; ?>
+                                    </td>
+                                    <td style="font-weight: 600; color: <?php echo ($m['tipo'] === 'ingreso') ? '#047857' : '#b91c1c'; ?>;">
+                                        <?php echo ($m['tipo'] === 'ingreso' ? '+' : '-'); ?>$<?php echo number_format($m['monto'], 2); ?>
+                                    </td>
+                                    <td>
+                                        <?php if (empty($m['es_automatico'])): ?>
+                                            <a href="finanzas.php?eliminar_finanza=<?php echo $m['id']; ?>&mes=<?php echo $mesSeleccionado; ?>" onclick="return confirm('¿Estás segura de eliminar este registro?');" style="color: #ef4444; text-decoration: none; font-size: 0.85rem;" title="Eliminar">
+                                                <i class="fa-solid fa-trash-can"></i>
+                                            </a>
+                                        <?php else: ?>
+                                            <span style="color: var(--luxury-muted); font-size: 0.75rem;" title="Este monto proviene directamente de la agenda de turnos">Desde Agenda</span>
+                                        <?php endif; ?>
+                                    </td>
+                                </tr>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </form>
 
     </div>
 
+    <script>
+        // Script para seleccionar o deseleccionar todos los checkboxes manuales
+        const masterCheckbox = document.getElementById('seleccionar-todos');
+        if (masterCheckbox) {
+            masterCheckbox.addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('.check-movimiento');
+                checkboxes.forEach(cb => {
+                    cb.checked = masterCheckbox.checked;
+                });
+            });
+        }
+    </script>
 </body>
 </html>
