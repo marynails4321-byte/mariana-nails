@@ -127,9 +127,9 @@ try {
             <h3 style="font-family: 'Cormorant Garamond', serif; font-size: 1.5rem; color: var(--luxury-dark); margin-top: 0; margin-bottom: 10px;">
                 <i class="fa-solid fa-calendar-check" style="color: #c57d0a; margin-right: 8px;"></i> Tus Citas Registradas
             </h3>
-            <p style="color: var(--luxury-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;">
-                Aquí puedes visualizar el estado de tus turnos agendados en el estudio. (tu cita sera confirmada en el menor tiempo posible)
-            </p>
+           <p style="color: var(--luxury-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;">
+    Aquí puedes visualizar el estado de tus turnos agendados en el estudio. <span style="color: var(--luxury-gold); font-weight: 500;">(tu cita sera confirmada en el menor tiempo posible)</span>
+</p>
 
             <?php if (empty($citas_clienta)): ?>
                 <!-- Estado vacío si no tiene citas aún -->
