@@ -1,85 +1,83 @@
 <?php
 session_start();
-require_once 'conexion.php';
 
-$error_login = '';
-
-// Si el formulario fue enviado por POST desde index.php
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nombre = trim($_POST['nombre'] ?? '');
-    $telefono = trim($_POST['telefono'] ?? '');
-    $fnacimiento = trim($_POST['fnacimiento'] ?? '');
-
-    if (!empty($nombre) && !empty($telefono) && !empty($fnacimiento)) {
-        try {
-            // Verificar si el usuario ya existe en la base de datos
-            $stmt = $pdo->prepare("SELECT * FROM usuarios WHERE nombre = :nombre AND rol = 'clienta'");
-            $stmt->execute(['nombre' => $nombre]);
-            $clienta = $stmt->fetch(PDO::FETCH_ASSOC);
-
-            if ($clienta) {
-                // Si ya existe, actualizamos su teléfono y fecha de nacimiento
-                $stmtUpdate = $pdo->prepare("UPDATE usuarios SET telefono = :telefono, fnacimiento = :fnacimiento WHERE id = :id");
-                $stmtUpdate->execute([
-                    'telefono' => $telefono,
-                    'fnacimiento' => $fnacimiento,
-                    'id' => $clienta['id']
-                ]);
-                $clienta_id = $clienta['id'];
-            } else {
-                // Si no existe, la registramos como nueva clienta con su teléfono
-                $stmtInsert = $pdo->prepare("INSERT INTO usuarios (nombre, telefono, fnacimiento, rol) VALUES (:nombre, :telefono, :fnacimiento, 'clienta')");
-                $stmtInsert->execute([
-                    'nombre' => $nombre,
-                    'telefono' => $telefono,
-                    'fnacimiento' => $fnacimiento
-                ]);
-                $clienta_id = $pdo->lastInsertId();
-            }
-
-            // Establecer las variables de sesión
-            $_SESSION['clienta_logged'] = true;
-            $_SESSION['clienta_id'] = $clienta_id;
-            $_SESSION['nombre_clienta'] = $nombre;
-
-        } catch (PDOException $e) {
-            $error_login = "Error en la base de datos: " . $e->getMessage();
-        }
-    } else {
-        $error_login = "Por favor completa todos los campos obligatorios.";
-    }
-}
-
-// Validación de seguridad: si no hay sesión activa, redirigir al inicio
-if (!isset($_SESSION['clienta_logged']) || $_SESSION['clienta_logged'] !== true) {
-    header("Location: index.php");
+/* 
+// Comentado temporalmente para que te deje probar el admin
+if (isset($_COOKIE['cookie_clienta_id']) && isset($_COOKIE['cookie_clienta_nombre'])) {
+    $_SESSION['clienta_logged'] = true;
+    $_SESSION['clienta_id'] = $_COOKIE['cookie_clienta_id'];
+    $_SESSION['nombre_clienta'] = $_COOKIE['cookie_clienta_nombre'];
+    
+    header("Location: clienta.php");
     exit();
 }
+*/
 ?>
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel de Clienta - Mariana Nails Studio</title>
+    <title>Mariana Nails Studio - Acceso</title>
+    
+    <!-- Fuentes elegantes de Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- CSS Separado -->
     <link rel="stylesheet" href="index.css">
 </head>
 <body class="login-body">
-    <div class="login-card-luxury" style="max-width: 600px; text-align: center;">
-        <h2 style="font-family: 'Cormorant Garamond', serif; color: var(--luxury-dark);">¡Bienvenida, <?php echo htmlspecialchars($_SESSION['nombre_clienta'] ?? 'Clienta'); ?>! 💅</h2>
-        <p class="login-subtitle">Tus datos y número de teléfono han sido guardados correctamente.</p>
-        
-        <?php if (!empty($error_login)): ?>
-            <div style="background-color: #fdf2f2; border: 1px solid #f8d7da; color: #a94442; padding: 10px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 15px;">
-                <?php echo htmlspecialchars($error_login); ?>
-            </div>
-        <?php endif; ?>
 
-        <div style="margin-top: 20px;">
-            <a href="logout.php" class="btn-luxury" style="display: inline-block; text-decoration: none; background: #ef4444; color: white; padding: 10px 20px; border-radius: 6px;">Cerrar Sesión</a>
+    <div class="login-card-luxury">
+        <!-- Logo de Mariana Nails -->
+        <div class="logo-container">
+            <img src="Logo.png" alt="Mariana Nails Studio" class="brand-logo">
         </div>
+        
+        <p class="login-subtitle">Ingresa tus datos para acceder a tu experiencia</p>
+
+        <!-- Formulario para la Clienta apuntando a clienta.php por POST -->
+        <form action="clienta.php" method="POST">
+            <!-- Campo Nombre -->
+            <div class="form-group-luxury">
+                <label for="nombre">Nombre y Apellido</label>
+                <div class="input-wrapper">
+                    <i class="fa-regular fa-user"></i>
+                    <input type="text" id="nombre" name="nombre" placeholder="Ej. Sofía Pérez" required>
+                </div>
+            </div>
+
+            <!-- Campo Teléfono -->
+            <div class="form-group-luxury">
+                <label for="telefono">Número de Teléfono</label>
+                <div class="input-wrapper">
+                    <i class="fa-solid fa-phone"></i>
+                    <input type="tel" id="telefono" name="telefono" placeholder="Ej. 3001234567" required>
+                </div>
+            </div>
+
+            <!-- Campo Fecha de Nacimiento -->
+            <div class="form-group-luxury">
+                <label for="fnacimiento">Fecha de Nacimiento</label>
+                <div class="input-wrapper">
+                    <i class="fa-regular fa-calendar"></i>
+                    <input type="date" id="fnacimiento" name="fnacimiento" required>
+                </div>
+            </div>
+
+            <button type="submit" class="btn-luxury">Entrar a mi panel</button>
+        </form>
+
+        <div class="luxury-divider">
+            <span>o acceso interno</span>
+        </div>
+
+        <!-- Botón independiente para el Administrador -->
+        <button type="button" class="btn-admin-luxury" onclick="window.location.href='admin.php'">
+            <i class="fa-solid fa-key"></i> Panel de Administración
+        </button>
     </div>
+
 </body>
 </html>

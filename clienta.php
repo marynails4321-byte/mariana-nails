@@ -10,6 +10,7 @@ $citas_clienta = [];
 // Procesar cuando el formulario es enviado por POST (Inicio de sesión de clienta)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nombre = trim($_POST['nombre'] ?? '');
+    $telefono = trim($_POST['telefono'] ?? ''); // <--- ¡Capturamos el teléfono enviado desde index.php!
     $fnacimiento = trim($_POST['fnacimiento'] ?? '');
 
     if (!empty($nombre) && !empty($fnacimiento)) {
@@ -21,10 +22,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($clienta) {
                 $_SESSION['clienta_id'] = $clienta['id'];
+                
+                // Opcional: Actualizar el teléfono por si lo cambió o estaba en 'No registrado'
+                if (!empty($telefono)) {
+                    $updateTel = $pdo->prepare("UPDATE usuarios SET telefono = :telefono WHERE id = :id");
+                    $updateTel->execute(['telefono' => $telefono, 'id' => $clienta['id']]);
+                }
             } else {
-                // 2. Si no existe, se registra automáticamente en la tabla usuarios
-                $insertStmt = $pdo->prepare("INSERT INTO usuarios (nombre, fnacimiento, rol) VALUES (:nombre, :fnacimiento, 'clienta') RETURNING id");
-                $insertStmt->execute(['nombre' => $nombre, 'fnacimiento' => $fnacimiento]);
+                // 2. Si no existe, se registra automáticamente en la tabla usuarios incluyedo el teléfono
+                $insertStmt = $pdo->prepare("INSERT INTO usuarios (nombre, telefono, fnacimiento, rol) VALUES (:nombre, :telefono, :fnacimiento, 'clienta') RETURNING id");
+                $insertStmt->execute([
+                    'nombre' => $nombre, 
+                    'telefono' => !empty($telefono) ? $telefono : 'No registrado', 
+                    'fnacimiento' => $fnacimiento
+                ]);
                 $nuevoUsuario = $insertStmt->fetch(PDO::FETCH_ASSOC);
                 $_SESSION['clienta_id'] = $nuevoUsuario['id'];
             }
@@ -128,7 +139,7 @@ try {
                 <i class="fa-solid fa-calendar-check" style="color: #c57d0a; margin-right: 8px;"></i> Tus Citas Registradas
             </h3>
            <p style="color: var(--luxury-muted); font-size: 0.95rem; line-height: 1.6; margin-bottom: 20px;">
-                  Aquí puedes visualizar el estado de tus turnos agendados en el estudio. <span style="color: var(--luxury-gold); font-weight: 500;">(tu cita sera confirmada en el menor tiempo posible)</span>
+                Aquí puedes visualizar el estado de tus turnos agendados en el estudio. <span style="color: var(--luxury-gold); font-weight: 500;">(tu cita sera confirmada en el menor tiempo posible)</span>
             </p>
 
             <?php if (empty($citas_clienta)): ?>
@@ -155,7 +166,7 @@ try {
                             <div style="display: flex; align-items: center; gap: 10px;">
                                 <span class="badge-status"><?php echo htmlspecialchars($estadoCita); ?></span>
                                 
-                                <!-- Botón para que la clienta borre su cita rechazada (o cualquier cita si lo desea) -->
+                                <!-- Botón para que la clienta borre su cita rechazada -->
                                 <?php if (strtolower($estadoCita) === 'rechazada'): ?>
                                     <a href="clienta.php?eliminar_cita=<?php echo $cita['id']; ?>" style="background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; padding: 5px 8px; border-radius: 4px; font-size: 0.75rem; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;" onclick="return confirm('¿Deseas quitar esta cita rechazada de tu historial?');" title="Quitar de mi pantalla">
                                         <i class="fa-solid fa-xmark"></i> Quitar
