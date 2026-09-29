@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 // --- GENERAR ENLACE DE WHATSAPP PARA QUE LA CLIENTA TE ESCRIBA ---
                 // REEMPLAZA ESTE NÚMERO por el tuyo con código de país (sin el signo + ni espacios)
                 // Ejemplo para Colombia: 573001234567
-                $telefono_negocio = "573001234567"; 
+                $telefono_negocio = "573242968873"; 
                 
                 $mensaje_cliente = "Hola Mariana, soy " . $nombre_clienta . ". Acabo de agendar una cita para el servicio de *" . $servicio . "* ($" . number_format($precio_servicio, 0, ',', '.') . ") el día *" . $fecha_hora_cita . "*. Quedo atenta a la confirmación. ¡Gracias!";
                 
