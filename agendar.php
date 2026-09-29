@@ -11,6 +11,7 @@ $clienta_id = $_SESSION['clienta_id'];
 $nombre_clienta = $_SESSION['nombre_clienta'];
 $error = '';
 $exito = '';
+$whatsapp_url_cliente = '';
 
 try {
     $stmtServicios = $pdo->query("SELECT * FROM servicios ORDER BY id ASC");
@@ -32,7 +33,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fecha_hora_cita = $fecha_seleccionada . ' ' . $hora_seleccionada . ':00';
         
         try {
-            // 1. Obtener de forma informativa el precio del servicio para el mensaje de WhatsApp (sin guardarlo en citas)
+            // 1. Obtener de forma informativa el precio del servicio
             $stmtPrecio = $pdo->prepare("SELECT precio FROM servicios WHERE nombre = :nombre LIMIT 1");
             $stmtPrecio->execute(['nombre' => $servicio]);
             $datosServicio = $stmtPrecio->fetch(PDO::FETCH_ASSOC);
@@ -50,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($cita_existente) {
                 $error = "Gracias por tu interes pero esta hora ya se encuentra agendada. Lo sentimos, debe haber un espacio mínimo de 3 horas entre cada turno.";
             } else {
-                // 3. Insertar la cita SIN la columna precio (ya que la tabla citas no la tiene)
+                // 3. Insertar la cita
                 $stmtInsert = $pdo->prepare("
                     INSERT INTO citas (clienta_id, servicio, foto_ejemplo, fecha_cita, estado) 
                     VALUES (:clienta_id, :servicio, :foto_ejemplo, :fecha_cita, 'Pendiente')
@@ -64,21 +65,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 
                 $exito = "¡Tu cita ha sido agendada con éxito!";
 
-                // --- NOTIFICACIÓN AUTOMÁTICA A WHATSAPP (CALLMEBOT) ---
-                $telefono_admin = "+573001234567"; // Reemplaza con tu número y código de país
-                $apikey_admin = "TU_API_KEY";      // Tu clave de CallMeBot
-
-                $mensaje_whatsapp = "✨ *¡Nueva cita pendiente!* ✨%0A%0A" .
-                                    "Clienta: " . urlencode($nombre_clienta) . "%0A" .
-                                    "Servicio: " . urlencode($servicio) . " ($" . number_format($precio_servicio, 0, ',', '.') . ")%0A" .
-                                    "Fecha y Hora: " . urlencode($fecha_hora_cita) . "%0A%0A" .
-                                    "Ingresa al panel para aprobarla o rechazarla.";
-
-                $url_api = "https://api.callmebot.com/whatsapp.php?phone=" . $telefono_admin . 
-                           "&text=" . $mensaje_whatsapp . 
-                           "&apikey=" . $apikey_admin;
-
-                @file_get_contents($url_api);
+                // --- GENERAR ENLACE DE WHATSAPP PARA QUE LA CLIENTA TE ESCRIBA ---
+                // REEMPLAZA ESTE NÚMERO por el tuyo con código de país (sin el signo + ni espacios)
+                // Ejemplo para Colombia: 573001234567
+                $telefono_negocio = "573001234567"; 
+                
+                $mensaje_cliente = "Hola Mariana, soy " . $nombre_clienta . ". Acabo de agendar una cita para el servicio de *" . $servicio . "* ($" . number_format($precio_servicio, 0, ',', '.') . ") el día *" . $fecha_hora_cita . "*. Quedo atenta a la confirmación. ¡Gracias!";
+                
+                $whatsapp_url_cliente = "https://wa.me/" . $telefono_negocio . "?text=" . urlencode($mensaje_cliente);
             }
         } catch (PDOException $e) {
             $error = "Error en el sistema al procesar la cita: " . $e->getMessage();
@@ -114,6 +108,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <?php if (!empty($exito)): ?>
             <div class="alert-success"><i class="fa-solid fa-circle-check"></i> <?php echo htmlspecialchars($exito); ?></div>
+            <!-- Botón directo por si el navegador bloquea la redirección automática -->
+            <div style="text-align: center; margin-top: 15px;">
+                <a href="<?php echo $whatsapp_url_cliente; ?>" target="_blank" class="btn-luxury" style="background-color: #25d366; text-decoration: none; display: inline-block;">
+                    <i class="fa-brands fa-whatsapp"></i> Enviar confirmación por WhatsApp
+                </a>
+            </div>
         <?php endif; ?>
 
         <form action="agendar.php" method="POST">
@@ -172,6 +172,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             cardElement.classList.add('selected');
             cardElement.querySelector('input[type="radio"]').checked = true;
         }
+
+        <?php if (!empty($whatsapp_url_cliente)): ?>
+            // Abre WhatsApp automáticamente después de 2 segundos
+            setTimeout(function() {
+                window.location.href = "<?php echo $whatsapp_url_cliente; ?>";
+            }, 2000);
+        <?php endif; ?>
     </script>
 </body>
 </html>
