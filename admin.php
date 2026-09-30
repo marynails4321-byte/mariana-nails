@@ -101,6 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['
     }
 }
 
+// Eliminar individual
 if (isset($_GET['eliminar_clienta'])) {
     $id_clienta = intval($_GET['eliminar_clienta']);
     try {
@@ -112,6 +113,33 @@ if (isset($_GET['eliminar_clienta'])) {
         exit();
     } catch (PDOException $e) {
         $error_db = "Error al eliminar la clienta: " . $e->getMessage();
+    }
+}
+
+// Eliminar selección múltiple de clientas
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['accion']) && $_POST['accion'] === 'eliminar_seleccionadas') {
+    $ids_a_eliminar = $_POST['clientas_ids'] ?? [];
+    if (!empty($ids_a_eliminar) && is_array($ids_a_eliminar)) {
+        try {
+            // Sanitizar los IDs asegurando que sean enteros
+            $ids_a_eliminar = array_map('intval', $ids_a_eliminar);
+            $placeholders = implode(',', array_fill(0, count($ids_a_eliminar), '?'));
+
+            // Eliminar citas asociadas
+            $stmtDelCitas = $pdo->prepare("DELETE FROM citas WHERE clienta_id IN ($placeholders)");
+            $stmtDelCitas->execute($ids_a_eliminar);
+
+            // Eliminar clientas
+            $stmtDelClientas = $pdo->prepare("DELETE FROM usuarios WHERE id IN ($placeholders) AND rol = 'clienta'");
+            $stmtDelClientas->execute($ids_a_eliminar);
+
+            header("Location: admin.php");
+            exit();
+        } catch (PDOException $e) {
+            $error_db = "Error al eliminar las clientas seleccionadas: " . $e->getMessage();
+        }
+    } else {
+        $error_db = "Por favor selecciona al menos una clienta para eliminar.";
     }
 }
 
@@ -136,7 +164,6 @@ try {
     $stmtClientas = $pdo->query("SELECT * FROM usuarios WHERE rol = 'clienta' ORDER BY id DESC");
     $clientas = $stmtClientas->fetchAll(PDO::FETCH_ASSOC);
 
-    // Consulta con JOIN trayendo también el teléfono de la tabla usuarios (u.telefono)
     $stmtCitas = $pdo->query("
         SELECT c.*, u.nombre as nombre_clienta, u.telefono as telefono_clienta, s.nombre as nombre_servicio, s.precio as precio_servicio 
         FROM citas c 
@@ -320,42 +347,59 @@ try {
                 </form>
             </div>
 
-            <div class="table-responsive">
-                <table class="luxury-table">
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Nombre Completo</th>
-                            <th>Teléfono</th>
-                            <th>Fecha de Nacimiento</th>
-                            <th>Registro</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if (empty($clientas)): ?>
+            <!-- Formulario de eliminación múltiple -->
+            <form action="admin.php" method="POST" onsubmit="return confirm('¿Estás segura de eliminar las clientas seleccionadas?');">
+                <input type="hidden" name="accion" value="eliminar_seleccionadas">
+                
+                <div style="margin-bottom: 15px; display: flex; justify-content: flex-end;">
+                    <button type="submit" class="btn-accion-rechazar" style="padding: 8px 12px; cursor: pointer; font-size: 0.85rem;">
+                        <i class="fa-solid fa-trash-can"></i> Eliminar seleccionadas
+                    </button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="luxury-table">
+                        <thead>
                             <tr>
-                                <td colspan="6" style="text-align: center; color: var(--luxury-muted); padding: 20px;">No hay clientas registradas todavía.</td>
+                                <th style="width: 40px; text-align: center;">
+                                    <input type="checkbox" id="seleccionar-todas" onclick="toggleSelectAll(this)" style="cursor: pointer;">
+                                </th>
+                                <th>ID</th>
+                                <th>Nombre Completo</th>
+                                <th>Teléfono</th>
+                                <th>Fecha de Nacimiento</th>
+                                <th>Registro</th>
+                                <th>Acciones</th>
                             </tr>
-                        <?php else: ?>
-                            <?php foreach ($clientas as $c): ?>
+                        </thead>
+                        <tbody>
+                            <?php if (empty($clientas)): ?>
                                 <tr>
-                                    <td><?php echo htmlspecialchars($c['id']); ?></td>
-                                    <td><strong><?php echo htmlspecialchars($c['nombre']); ?></strong></td>
-                                    <td><?php echo htmlspecialchars($c['telefono'] ?? 'No registrado'); ?></td>
-                                    <td><?php echo htmlspecialchars($c['fnacimiento']); ?></td>
-                                    <td><?php echo htmlspecialchars($c['creado_en'] ?? $c['creado_at'] ?? 'Sin fecha'); ?></td>
-                                    <td>
-                                        <a href="admin.php?eliminar_clienta=<?php echo $c['id']; ?>" class="btn-accion-rechazar" title="Eliminar clienta" onclick="return confirm('¿Estás segura de eliminar a esta clienta?');">
-                                            <i class="fa-solid fa-trash"></i> Eliminar
-                                        </a>
-                                    </td>
+                                    <td colspan="7" style="text-align: center; color: var(--luxury-muted); padding: 20px;">No hay clientas registradas todavía.</td>
                                 </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
-            </div>
+                            <?php else: ?>
+                                <?php foreach ($clientas as $c): ?>
+                                    <tr>
+                                        <td style="text-align: center;">
+                                            <input type="checkbox" name="clientas_ids[]" value="<?php echo $c['id']; ?>" class="checkbox-clienta" style="cursor: pointer;">
+                                        </td>
+                                        <td><?php echo htmlspecialchars($c['id']); ?></td>
+                                        <td><strong><?php echo htmlspecialchars($c['nombre']); ?></strong></td>
+                                        <td><?php echo htmlspecialchars($c['telefono'] ?? 'No registrado'); ?></td>
+                                        <td><?php echo htmlspecialchars($c['fnacimiento']); ?></td>
+                                        <td><?php echo htmlspecialchars($c['creado_en'] ?? $c['creado_at'] ?? 'Sin fecha'); ?></td>
+                                        <td>
+                                            <a href="admin.php?eliminar_clienta=<?php echo $c['id']; ?>" class="btn-accion-rechazar" title="Eliminar clienta" onclick="return confirm('¿Estás segura de eliminar a esta clienta?');">
+                                                <i class="fa-solid fa-trash"></i> Eliminar
+                                            </a>
+                                        </td>
+                                    </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -367,6 +411,12 @@ try {
             buttons.forEach(btn => btn.classList.remove('active'));
             document.getElementById(sectionId).classList.add('active');
             evt.currentTarget.classList.add('active');
+        }
+
+        // Función para seleccionar o deseleccionar todos los checkboxes de la tabla
+        function toggleSelectAll(source) {
+            const checkboxes = document.querySelectorAll('.checkbox-clienta');
+            checkboxes.forEach(cb => cb.checked = source.checked);
         }
     </script>
 </body>
